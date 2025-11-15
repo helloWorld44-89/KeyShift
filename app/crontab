@@ -1,0 +1,3 @@
+#run script 1x per day to change guest new work password
+0 0 * * * /usr/bin/python3 app/cron.py
+#new line
