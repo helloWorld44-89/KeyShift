@@ -1,17 +1,8 @@
 import qrcode
 
 
-def genQRCode( password):
-    """
-    Generates a QR code image for a Wi-Fi network.
-
-    Args:
-        ssid (str): The SSID (network name) of the Wi-Fi network.
-        password (str): The password of the Wi-Fi network.
-        security_type (str, optional): The security type (e.g., "WPA", "WEP", "NONE"). Defaults to "WPA".
-        hidden (bool, optional): Whether the network is hidden. Defaults to False.
-        filename (str, optional): The name of the output image file. Defaults to "wifi_qrcode.png".
-    """
+def genQRCode(password):
+   
     ssid='ThouShaltNotSteal'
     security_type="WPA"
     hidden=False
