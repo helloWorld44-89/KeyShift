@@ -2,7 +2,7 @@
 FROM python:3.13-slim
 
 #install cron
-RUN apt-get install cron
+RUN apt-get update && apt-get install -y cron && apt-get clean all
 
 # Set the working directory in the container
 WORKDIR /app
@@ -16,6 +16,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the current directory contents into the container at /app
 COPY . .
 
+# cron file to crontab for the cron.py script
+COPY app/crontab /etc/cron.d/qrCron
+RUN chmod 644 /etc/cron.d/qrCron
+
 # Expose the port Flask runs on
 EXPOSE 5000
 
@@ -23,4 +27,5 @@ EXPOSE 5000
 ENV FLASK_APP=app.py
 
 # Run the Flask application
-CMD ["flask", "run", "--host=0.0.0.0"]
+ENTRYPOINT [ "/app/app/startUp.sh" ]
+###docker build -t guestqrcode .
