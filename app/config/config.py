@@ -1,5 +1,7 @@
 import json
 
+
+
 def getConfig():
     file_path = 'app/config/config.json' 
     try:

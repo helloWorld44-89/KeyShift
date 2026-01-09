@@ -1,6 +1,7 @@
 from utilities.genPW import genPW
 from utilities.genQR import genQRCode
 import datetime
+from config import config
 
 
 now=datetime.datetime.now()
