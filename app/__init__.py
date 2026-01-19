@@ -6,5 +6,8 @@ def create_app():
 
     from .pages import bp
     app.register_blueprint(bp, url_prefix = '/')
+    import config
+    import api
+    
 
     return app

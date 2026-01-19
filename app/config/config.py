@@ -3,7 +3,7 @@ import json
 
 
 def getConfig():
-    file_path = 'app/config/config.json' 
+    file_path = 'config/config.json' 
     try:
         with open(file_path, 'r') as f:
             data = json.load(f)

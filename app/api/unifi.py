@@ -1,34 +1,39 @@
 import requests
 import json
-from app.config.config import getConfig
+from config import config
 
 def changePW(pw):
-    config= getConfig()
-    gwIP = config.controllerIp
-    userName = config.apiUser.userName
-    passWord = config.apiUser.passWord
-    wifiId = config.wifiInfo.ID 
-    newPW = pw
+    myConfig= config.getConfig()
+    gwIP = myConfig['controllerIp']
+    wifiId = myConfig['wifiInfo']['ID']
+    newPW =pw
 
     # Disable SSL warnings for self-signed certificates
     requests.packages.urllib3.disable_warnings()
 
     session = requests.Session()
 
-    # 1. Login to UniFi OS
-    # Note: UDM Pro uses /api/auth/login for the main OS login
-    login_url = f"https://{gwIP}/api/auth/login"
-    login_payload = {"username": userName, "password": passWord}
-    session.post(login_url, json=login_payload, verify=False)
+  
+   
+    update_url = f"https://{gwIP}/proxy/network/integration/v1/sites/88f7af54-98f8-306a-a1c7-c9349722b1f6/wifi/broadcasts/{wifiId}"
+    headers= {
+        'Accept': 'application/json',
+        'X-API-KEY': 'JbcZXUU-WrNj2XTUBF3mAqNJR2vaF6gl'}
+    response = session.get(update_url, headers=headers, verify=False)
+    dict = response.json()
+    del dict['id']
+    del dict['metadata']
+    dict['securityConfiguration']['passphrase'] = newPW
+    headers= {
+        'Content-Type': 'application/json',
+        'X-API-KEY': 'JbcZXUU-WrNj2XTUBF3mAqNJR2vaF6gl'}
 
-    # 2. Update the Wi-Fi Password
-    # The network API on UDM Pro is proxied via /proxy/network/
-    update_url = f"https://{gwIP}/proxy/network/api/s/default/rest/wlanconf/{wifiId}"
-    update_payload = {"x_password": newPW}
+    newResponse = session.put(update_url, headers=headers, json=dict, verify=False)
 
-    response = session.put(update_url, json=update_payload, verify=False)
 
-    if response.status_code == 200:
+    if newResponse.status_code == 200:
+        print("Success: Wi-Fi password updated.")
         return "Success: Wi-Fi password updated."
     else:
-        return f"Error: {response.status_code} - {response.text}"
+        print(f"Error: {newResponse.status_code} - {newResponse.text} ")
+        return f"Error: {newResponse.status_code} - {newResponse.text}"

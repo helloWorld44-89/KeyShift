@@ -1,9 +1,9 @@
 import qrcode
-
+from config import config
 
 def genQRCode(password):
-   
-    ssid='ThouShaltNotSteal'
+    myConfig = config.getConfig()
+    ssid= myConfig['wifiInfo']['SSID']
     security_type="WPA"
     hidden=False
     filename="guestqrcode.png"
@@ -30,6 +30,6 @@ def genQRCode(password):
     img = qr.make_image(fill_color="black", back_color="white")
 
     # Save the image
-    img.save(f"app/static/img/{filename}")
+    img.save(f"static/img/{filename}")
     return(f"QR code saved as {filename}")
 
