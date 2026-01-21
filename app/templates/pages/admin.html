@@ -1,37 +1,258 @@
-<!DOCTYPE html>
-<html data-bs-theme="dark">
+<!doctype html>
+<html lang="en">
   <head>
-    <title>Guest WIFI</title>
-    <link rel="stylesheet" type="text/css" href="static/css/styles.css" />
-    <link rel="stylesheet" type="text/css" href="static/css/bootstrap.css" />
+    <meta charset="UTF-8" />
+    <link rel="icon" href="static/img/KeyShift.png" type="image/png" />
+
+    <title>KeyShift</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
   </head>
-  <body>
-    <div class="background d-flex align-items-center">
-      <div class="container-lg glass-effect flex-column">
-        <div class="flex-column">
-          <h3 class="text-center mt-3">
-            Scan the code
-            <hr class="mt-0 mb-0 w-25" />
-            <small class="text-body-secondary mt-0"
-              >for Guest Wifi Access</small
+
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">KeyShift Admin</a>
+      </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+      <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2">
+          <div class="list-group">
+            <a
+              class="list-group-item list-group-item-action active"
+              data-bs-toggle="tab"
+              href="#home"
+              >Home</a
             >
-          </h3>
+            <a
+              class="list-group-item list-group-item-action"
+              data-bs-toggle="tab"
+              href="#configuration"
+              >Configuration</a
+            >
+            <a
+              class="list-group-item list-group-item-action"
+              data-bs-toggle="tab"
+              href="#advanced"
+              >Advanced</a
+            >
+            <a
+              class="list-group-item list-group-item-action"
+              data-bs-toggle="tab"
+              href="#security"
+              >Security</a
+            >
+            <a
+              class="list-group-item list-group-item-action"
+              data-bs-toggle="tab"
+              href="#settings"
+              >Settings</a
+            >
+          </div>
         </div>
-        <div class="d-flex flex-column">
-          <hr />
-          <div
-            class="d-flex h-100 justify-content-center"
-            style="min-height: 500px"
-          >
-            <img
-              class="img-fluid p-3 p-md-5 mx-0"
-              src="static/img/Guestwifi.png"
-              style="min-height: 300px; min-width: 300px"
-            />
+
+        <!-- Main Content -->
+        <div class="col-md-10">
+          <div class="tab-content">
+            <!-- HOME TAB -->
+            <div class="tab-pane fade show active" id="home">
+              <h3>Current WiFi Status</h3>
+              <div class="card p-3 mt-3">
+                <h5>Current Password:</h5>
+                <div class="input-group mb-3 w-25">
+                  <input
+                    type="test"
+                    class="form-control"
+                    id="passWord"
+                    placeholder="Wifi Password"
+                    value="{{
+                  config.wifiInfo.password }}"
+                    disabled
+                  />
+                </div>
+
+                <h5 class="mt-4">SSID Information</h5>
+                <table class="table table-striped mt-2">
+                  <thead>
+                    <tr>
+                      <th>SSID</th>
+                      <th>Network ID</th>
+                      <th>Site ID</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>OfficeWiFi</td>
+                      <td>12345</td>
+                      <td>default</td>
+                      <td><span class="badge bg-success">Active</span></td>
+                    </tr>
+                    <tr>
+                      <td>GuestWiFi</td>
+                      <td>67890</td>
+                      <td>default</td>
+                      <td><span class="badge bg-success">Active</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- CONFIGURATION TAB -->
+            <div class="tab-pane fade" id="configuration">
+              <h3>Configuration</h3>
+              <form action="/updateConfig" method="POST" class="mt-3">
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label">API Type</label>
+                    <select class="form-select" name="api_type">
+                      <option>UNIFI</option>
+                      <option>OMADA</option>
+                      <option>OPNSENSE</option>
+                    </select>
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" name="username" />
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Password</label>
+                    <input
+                      type="password"
+                      class="form-control"
+                      name="password"
+                    />
+                  </div>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label">API Key</label>
+                    <input type="text" class="form-control" name="apiKey" />
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Controller IP / Hostname</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="controller_host"
+                    />
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">SSID</label>
+                    <input type="text" class="form-control" name="SSID" />
+                  </div>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label">WiFi Network ID</label>
+                    <input type="text" class="form-control" name="wifiId" />
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Site ID</label>
+                    <input type="text" class="form-control" name="siteId" />
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Rotation Interval</label>
+                    <select class="form-select" name="rotation_interval">
+                      <option value="0 0 * * *">Daily</option>
+                      <option value="0 0 * * 0">Weekly</option>
+                      <option value="0 0 1 * *">Monthly</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="row mb-4">
+                  <div class="col-md-4">
+                    <label class="form-label">Rotation Time</label>
+                    <input
+                      type="time"
+                      class="form-control"
+                      name="rotation_time"
+                    />
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                  Save Configuration
+                </button>
+              </form>
+            </div>
+
+            <!-- ADVANCED TAB -->
+            <div class="tab-pane fade" id="advanced">
+              <h3>Advanced Settings</h3>
+              <form class="mt-3">
+                <label class="form-label">Logging Level</label>
+                <select class="form-select w-25">
+                  <option>INFO</option>
+                  <option>DEBUG</option>
+                </select>
+
+                <button class="btn btn-secondary mt-3">Save</button>
+              </form>
+            </div>
+
+            <!-- SECURITY TAB -->
+            <div class="tab-pane fade" id="security">
+              <h3>User Management</h3>
+
+              <button class="btn btn-success mb-3">Add User</button>
+
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>admin</td>
+                    <td>Administrator</td>
+                    <td>
+                      <button class="btn btn-sm btn-warning">Edit</button>
+                      <button class="btn btn-sm btn-danger">Delete</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- SETTINGS TAB -->
+            <div class="tab-pane fade" id="settings">
+              <h3>Theme Settings</h3>
+              <form class="mt-3">
+                <label class="form-label">Theme</label>
+                <select class="form-select w-25">
+                  <option>Light</option>
+                  <option>Dark</option>
+                  <option>Auto</option>
+                </select>
+
+                <button class="btn btn-primary mt-3">Apply Theme</button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <script src="static/js/bootstrap.bundle.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

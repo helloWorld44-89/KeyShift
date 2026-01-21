@@ -6,19 +6,18 @@ def changePW(pw):
     myConfig= config.getConfig()
     gwIP = myConfig['controllerIp']
     wifiId = myConfig['wifiInfo']['ID']
+    siteID=myConfig["siteId"]
+    apiKey=myConfig["apiUser"]["apiKey"]
     newPW =pw
 
     # Disable SSL warnings for self-signed certificates
     requests.packages.urllib3.disable_warnings()
 
     session = requests.Session()
-
-  
-   
-    update_url = f"https://{gwIP}/proxy/network/integration/v1/sites/88f7af54-98f8-306a-a1c7-c9349722b1f6/wifi/broadcasts/{wifiId}"
+    update_url = f"https://{gwIP}/proxy/network/integration/v1/sites/{siteID}/wifi/broadcasts/{wifiId}"
     headers= {
         'Accept': 'application/json',
-        'X-API-KEY': 'JbcZXUU-WrNj2XTUBF3mAqNJR2vaF6gl'}
+        'X-API-KEY': f'{apiKey}'}
     response = session.get(update_url, headers=headers, verify=False)
     dict = response.json()
     del dict['id']
@@ -26,7 +25,7 @@ def changePW(pw):
     dict['securityConfiguration']['passphrase'] = newPW
     headers= {
         'Content-Type': 'application/json',
-        'X-API-KEY': 'JbcZXUU-WrNj2XTUBF3mAqNJR2vaF6gl'}
+        'X-API-KEY': f'{apiKey}'}
 
     newResponse = session.put(update_url, headers=headers, json=dict, verify=False)
 

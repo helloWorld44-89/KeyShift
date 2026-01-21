@@ -3,7 +3,11 @@ import json
 
 
 def getConfig():
-    file_path = 'config/config.json' 
+    import os 
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 
+    CONFIG_PATH = os.path.join(BASE_DIR, "config.json") 
+    #with open(CONFIG_PATH) as f: data = f.read()
+    file_path = CONFIG_PATH
     try:
         with open(file_path, 'r') as f:
             data = json.load(f)
@@ -26,10 +30,23 @@ def updatePW(password):
             
             json.dump(data,f,indent=4)
         return data
-        print(data)
     except FileNotFoundError:
         return f"Error: The file '{file_path}' was not found."
     except json.JSONDecodeError as e:
         return f"Error decoding JSON from '{file_path}': {e}"
+    except Exception as e:
+        return f"An unexpected error occurred: {e}"
+    
+def updateConfig(newConfig):
+    # Specify the filename
+    filename = "app/config/config copy.json"
+
+    # Open the file in write mode ('w') and dump the dictionary to it
+    try:
+        with open(filename, 'w') as json_file:
+            json.dump(newConfig, json_file, indent=4) # Using 'indent' for pretty-printing
+        return f"Successfully updated config to {filename}"
+    except IOError as e:
+       return f"Error writing to file {filename}: {e}"
     except Exception as e:
         return f"An unexpected error occurred: {e}"

@@ -1,0 +1,11 @@
+services:
+  web:
+    image: keyshift:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app/instance
+      - .:/app/config/config.json
+    restart: unless-stopped
+    environment:
+      - TZ=America/Chicago
