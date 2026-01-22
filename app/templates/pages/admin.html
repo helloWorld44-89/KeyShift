@@ -67,7 +67,7 @@
                 <h5>Current Password:</h5>
                 <div class="input-group mb-3 w-25">
                   <input
-                    type="test"
+                    type="text"
                     class="form-control"
                     id="passWord"
                     placeholder="Wifi Password"
@@ -169,9 +169,9 @@
                   <div class="col-md-4">
                     <label class="form-label">Rotation Interval</label>
                     <select class="form-select" name="rotation_interval">
-                      <option value="0 0 * * *">Daily</option>
-                      <option value="0 0 * * 0">Weekly</option>
-                      <option value="0 0 1 * *">Monthly</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
                     </select>
                   </div>
                 </div>
@@ -193,17 +193,33 @@
               </form>
             </div>
 
-            <!-- ADVANCED TAB -->
             <div class="tab-pane fade" id="advanced">
               <h3>Advanced Settings</h3>
+              <!-- Existing Logging Level Form -->
               <form class="mt-3">
                 <label class="form-label">Logging Level</label>
                 <select class="form-select w-25">
                   <option>INFO</option>
                   <option>DEBUG</option>
                 </select>
-
                 <button class="btn btn-secondary mt-3">Save</button>
+              </form>
+              <!-- New Crontab Job Edit Form -->
+              <form class="mt-4">
+                <label class="form-label">Crontab Schedule</label>
+                <input
+                  type="text"
+                  class="form-control w-50"
+                  placeholder="e.g. */5 * * * *"
+                />
+                <label class="form-label mt-3">Command</label>
+                <input
+                  type="text"
+                  class="form-control w-75"
+                  placeholder="/usr/bin/my-script.sh"
+                  value="{{ cron }}"
+                />
+                <button class="btn btn-secondary mt-3">Update Job</button>
               </form>
             </div>
 

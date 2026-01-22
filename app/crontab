@@ -1,3 +1,3 @@
-#run script 1x per day to change guest network password
+# Job for changing guest password on rotation
 0 0 * * * root /usr/local/bin/python3 /app/app/cron.py >> /tmp/cron_temp 2>&1
 

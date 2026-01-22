@@ -4,6 +4,7 @@ from flask_bcrypt import bcrypt
 from app.config.config import getConfig, updateConfig
 from flask_login import  login_user, login_required, logout_user, current_user
 import json
+from app.config.crontab import cronChange,getCrontab
 
 
 bp = Blueprint("pages", __name__)
@@ -15,8 +16,9 @@ def guest():
 @bp.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
+    cron = getCrontab()
     myConfig = getConfig()
-    return render_template("pages/admin.html",config = myConfig,current_user=current_user)
+    return render_template("pages/admin.html",config = myConfig,current_user=current_user,cron = cron)
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -48,6 +50,8 @@ def changeConfig():
     myConfig["apiType"] = newConfig["api_type"]
     myConfig["wifiInfo"]["SSID"]=newConfig["SSID"]
     myConfig["wifiInfo"]["ID"]=newConfig["wifiId"]
-    print(updateConfig(myConfig))
+    print(newConfig['rotation_time'].split(':'))
+    time = myConfig['rotation_time'].split(':')
+    cronChange(time[1],time[0])
     return redirect(request.referrer)
 
