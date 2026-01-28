@@ -4,7 +4,7 @@ import os
 
 def genQRCode(password):
     BASE_DIR = os.path.abspath(os.path.dirname("static")) 
-    imgPath = os.path.join(BASE_DIR,"app","static","img") 
+    imgPath = os.path.join("/app","app","static","img") 
     myConfig = config.getConfig()
     ssid= myConfig['wifiInfo']['SSID']
     security_type="WPA"
@@ -33,6 +33,6 @@ def genQRCode(password):
     img = qr.make_image(fill_color="black", back_color="white")
 
     # Save the image
-    img.save(f"{imgPath}\\{filename}")
+    img.save(f"{imgPath}/{filename}")
     return(f"QR code saved as {filename}")
 

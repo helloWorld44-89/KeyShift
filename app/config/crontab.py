@@ -1,22 +1,15 @@
 from crontab import CronTab
 
-def cronChange(time,interval=0, mode='daily'):
+def cronChange(mode):
 
-    with CronTab(user='root') as cron:
+    with CronTab(tabfile='/etc/cron.d/qrCron') as cron:
         # Look for an existing job using a specific comment
         jobComment = "Job for changing guest password on rotation"
         existingJobs = cron.find_comment(jobComment)
-        splitTime = time.split(':')
         if existingJobs:
             # Edit the existing job        
             job = list(existingJobs)[0] # Get the first job found
-            match mode:
-                case mode if mode == 'daily':
-                    job.setall(splitTime[1],splitTime[0],f'*/{interval}')
-                case mode if mode == 'weekly':
-                    job.setall(splitTime[1],splitTime[0],0,f'*/{interval}')
-                case mode if mode == 'monthly':
-                    job.setall(splitTime[1],splitTime[0],0,0,f'*/{interval}')
+            job.setall(mode)
 
             return f"Modified existing job: {job}"
         else:
@@ -24,5 +17,19 @@ def cronChange(time,interval=0, mode='daily'):
             return f"job not found: {existingJobs}"
         
 def getCrontab():
-    file = CronTab(user='root')
+    file = CronTab(tabfile='/etc/cron.d/qrCron')
     return file
+
+def manualCron(time):
+    with CronTab(tabfile='/etc/cron.d/qrCron') as cron:
+        # Look for an existing job using a specific comment
+        jobComment = "Job for changing guest password on rotation"
+        existingJobs = cron.find_comment(jobComment)
+        if existingJobs:
+            # Edit the existing job        
+            job = list(existingJobs)[0] # Get the first job found
+            job.setall(time)
+            return f"Cron schedule has been updated to {time}."
+
+        else:
+            return "An Error has occured. No job found. Please see logs for details"

@@ -113,23 +113,24 @@
                   <div class="col-md-4">
                     <label class="form-label">API Type</label>
                     <select class="form-select" name="api_type">
-                      <option>UNIFI</option>
-                      <option>OMADA</option>
-                      <option>OPNSENSE</option>
+                      <option value="unifi" {% if config.apiType == "unifi" %}selected{% endif %}>UNIFI</option>
+                      <option value="omada" {% if config.apiType == "omada" %}selected{% endif %}>OMADA</option>                      
+                      <option value="opnsense" {% if config.apiType == "opnsense" %}selected{% endif %}>OPNSENSE</option>
                     </select>
                   </div>
 
                   <div class="col-md-4">
                     <label class="form-label">Username</label>
-                    <input type="text" class="form-control" name="username" />
+                    <input type="text" class="form-control" name="username" value="{{ config.apiUser.userName }}" />
                   </div>
 
                   <div class="col-md-4">
                     <label class="form-label">Password</label>
                     <input
-                      type="password"
+                      type="text"
                       class="form-control"
                       name="password"
+                      value="{{ config.apiUser.passWord }}""
                     />
                   </div>
                 </div>
@@ -137,7 +138,7 @@
                 <div class="row mb-3">
                   <div class="col-md-4">
                     <label class="form-label">API Key</label>
-                    <input type="text" class="form-control" name="apiKey" />
+                    <input type="text" class="form-control" name="apiKey" value="{{ config.apiUser.apiKey }}"/>
                   </div>
 
                   <div class="col-md-4">
@@ -146,53 +147,44 @@
                       type="text"
                       class="form-control"
                       name="controller_host"
+                      value="{{ config.controllerIp }}"
                     />
                   </div>
 
                   <div class="col-md-4">
                     <label class="form-label">SSID</label>
-                    <input type="text" class="form-control" name="SSID" />
+                    <input type="text" class="form-control" name="SSID" value="{{ config.wifiInfo.SSID }}"/>
                   </div>
                 </div>
 
                 <div class="row mb-3">
                   <div class="col-md-4">
                     <label class="form-label">WiFi Network ID</label>
-                    <input type="text" class="form-control" name="wifiId" />
+                    <input type="text" class="form-control" name="wifiId" value="{{ config.wifiInfo.ID }}"/>
                   </div>
 
                   <div class="col-md-4">
                     <label class="form-label">Site ID</label>
-                    <input type="text" class="form-control" name="siteId" />
+                    <input type="text" class="form-control" name="siteId" value="{{ config.siteId}}"/>
                   </div>
 
                   <div class="col-md-4">
                     <label class="form-label">Rotation Interval</label>
-                    <select class="form-select" name="rotation_interval">
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
+                    <select class="form-select" name="rotation_mode">
+                      <option value="@daily" {% if schedule == '@daily' %}selected{% endif %}>Daily</option>
+                      <option value="@weekly" {% if schedule == '@weekly' %}selected{% endif %}>Weekly</option>
+                      <option value="@monthly" {% if schedule == '@monthly' %}selected{% endif %}>Monthly</option>
+                      <option value="custom" hidden {% if schedlule != "@daily" and schedule != "@weekly" and schedule != "@monthly" %}selected {% endif %}>Custom</option>
                     </select>
                   </div>
                 </div>
-
-                <div class="row mb-4">
-                  <div class="col-md-4">
-                    <label class="form-label">Rotation Time</label>
-                    <input
-                      type="time"
-                      class="form-control"
-                      name="rotation_time"
-                    />
-                  </div>
-                </div>
-
                 <button type="submit" class="btn btn-primary">
                   Save Configuration
                 </button>
               </form>
             </div>
 
+            <!-- Advanced options Tab  -->
             <div class="tab-pane fade" id="advanced">
               <h3>Advanced Settings</h3>
               <!-- Existing Logging Level Form -->
@@ -205,21 +197,37 @@
                 <button class="btn btn-secondary mt-3">Save</button>
               </form>
               <!-- New Crontab Job Edit Form -->
-              <form class="mt-4">
-                <label class="form-label">Crontab Schedule</label>
+              <form class="mt-4" action="/manualCron" method="POST">
+                <h3>Manually Change the CronJob Schedule</h3>
+                <label class="form-label">Current Crontab Schedule</label>
                 <input
                   type="text"
                   class="form-control w-50"
                   placeholder="e.g. */5 * * * *"
+                  id="schedule"
+                  name="current_schedule"
+                  value="{{ schedule }}"
+                  disabled
                 />
-                <label class="form-label mt-3">Command</label>
+                <label class="form-label">Change Crontab Schedule</label>
+                <input
+                  type="text"
+                  class="form-control w-50"
+                  placeholder="e.g. */5 * * * *"
+                  id="schedule"
+                  name="schedule"
+                  
+                />
+                <label class="form-label mt-3">Full CronJob</label>
                 <input
                   type="text"
                   class="form-control w-75"
                   placeholder="/usr/bin/my-script.sh"
                   value="{{ cron }}"
+                  id="cronDisplay"
+                  disabled
                 />
-                <button class="btn btn-secondary mt-3">Update Job</button>
+                <button class="btn btn-secondary mt-3"type="submit">Update Job</button>
               </form>
             </div>
 

@@ -20,12 +20,16 @@ COPY . .
 COPY app/crontab /etc/cron.d/qrCron
 RUN chmod 644 /etc/cron.d/qrCron
 
+COPY app/startUp.sh /app/
+RUN chmod +x /app/app/startUp.sh 
+
 # Expose the port Flask runs on
 EXPOSE 5000
 
 # Define environment variable for Flask
-ENV FLASK_APP=app.py
-
+ENV FLASK_APP=/app/app.py
 # Run the Flask application
-ENTRYPOINT [ "/app/app/startUp.sh" ]
-###docker build -t guestqrcode .
+CMD ["/bin/bash","app/startUp.sh"]
+#CMD ["ls","-a"]
+
+###docker build -t keyshift:latest .

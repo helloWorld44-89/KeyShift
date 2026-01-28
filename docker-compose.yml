@@ -4,8 +4,9 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - .:/app/instance
-      - .:/app/config/config.json
-    restart: unless-stopped
+      - .:/app
+
     environment:
+      - FLASK_DEBUG=true
+      - FLASK_APP=app.py
       - TZ=America/Chicago

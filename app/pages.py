@@ -4,7 +4,8 @@ from flask_bcrypt import bcrypt
 from app.config.config import getConfig, updateConfig
 from flask_login import  login_user, login_required, logout_user, current_user
 import json
-from app.config.crontab import cronChange,getCrontab
+from app.config.crontab import cronChange,getCrontab,manualCron
+from crontab import CronTab
 
 
 bp = Blueprint("pages", __name__)
@@ -17,8 +18,10 @@ def guest():
 @login_required
 def admin():
     cron = getCrontab()
+    schedule=cron[0].slices.render()
     myConfig = getConfig()
-    return render_template("pages/admin.html",config = myConfig,current_user=current_user,cron = cron)
+    
+    return render_template("pages/admin.html",config = myConfig,current_user=current_user,cron = cron,schedule=schedule)
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -50,8 +53,14 @@ def changeConfig():
     myConfig["apiType"] = newConfig["api_type"]
     myConfig["wifiInfo"]["SSID"]=newConfig["SSID"]
     myConfig["wifiInfo"]["ID"]=newConfig["wifiId"]
-    print(newConfig['rotation_time'].split(':'))
-    time = myConfig['rotation_time'].split(':')
-    cronChange(time[1],time[0])
+    cronChange(newConfig['rotation_mode'])
     return redirect(request.referrer)
+
+@bp.route("/manualCron",methods=["POST"])
+@login_required
+def manual():
+    time =request.form["schedule"]
+    print(manualCron(time))
+    return redirect(request.referrer)
+
 
