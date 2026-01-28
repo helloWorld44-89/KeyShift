@@ -15,8 +15,11 @@ def cronChange(mode):
             return f"job not found: {existingJobs}"
         
 def getCrontab():
-    file = CronTab(tabfile='/etc/cron.d/qrCron')
-    return file
+    try:
+        file = CronTab(tabfile='/etc/cron.d/qrCron')
+        return file
+    except Exception as e:
+        return f"An Error has occured: {e}"
 
 def manualCron(time):
     with CronTab(tabfile='/etc/cron.d/qrCron') as cron:

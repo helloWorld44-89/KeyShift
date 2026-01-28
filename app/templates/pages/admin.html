@@ -15,7 +15,8 @@
   <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">KeyShift Admin</a>
+        <a class="navbar-brand" href="#">
+          <img src="{{ url_for("static",filename ="img/KeyShift.png") }}" class="img-fluid" style="max-width: 50px;"/> KeyShift Admin</a>
       </div>
     </nav>
 
@@ -25,33 +26,43 @@
         <div class="col-md-2">
           <div class="list-group">
             <a
-              class="list-group-item list-group-item-action active"
+              class="list-group-item list-group-item-action {{ 'active' if tab== 'home'}}"
               data-bs-toggle="tab"
               href="#home"
+              aria-selected=
+              {{ "true" if tab=='home' else 'false' }}
               >Home</a
             >
             <a
-              class="list-group-item list-group-item-action"
+              class="list-group-item list-group-item-action {{ 'active' if tab== 'configuration'}}"
               data-bs-toggle="tab"
               href="#configuration"
+              aria-selected=
+              {{ "true" if tab=='configuration' else 'false' }}
               >Configuration</a
             >
             <a
-              class="list-group-item list-group-item-action"
+              class="list-group-item list-group-item-action {{ 'active' if tab== 'advanced'}}"
               data-bs-toggle="tab"
               href="#advanced"
+              aria-selected=
+              {{ "true" if tab=='advanced' else 'false' }}
               >Advanced</a
             >
             <a
-              class="list-group-item list-group-item-action"
+              class="list-group-item list-group-item-action  {{ 'active' if tab== 'security'}}"
               data-bs-toggle="tab"
               href="#security"
+              aria-selected=
+              {{ "true" if tab=='security' else 'false' }}
               >Security</a
             >
             <a
-              class="list-group-item list-group-item-action"
+              class="list-group-item list-group-item-action  {{ 'active' if tab== 'settings'}}"
               data-bs-toggle="tab"
               href="#settings"
+              aria-selected=
+              {{ "true" if tab=='settings' else 'false' }}
               >Settings</a
             >
           </div>
@@ -61,7 +72,7 @@
         <div class="col-md-10">
           <div class="tab-content">
             <!-- HOME TAB -->
-            <div class="tab-pane fade show active" id="home">
+            <div class="tab-pane fade {{ 'show active' if tab == 'home'  }}" id="home">
               <h3>Current WiFi Status</h3>
               <div class="card p-3 mt-3">
                 <h5>Current Password:</h5>
@@ -106,7 +117,7 @@
             </div>
 
             <!-- CONFIGURATION TAB -->
-            <div class="tab-pane fade" id="configuration">
+            <div class="tab-pane fade {{ ' show active' if tab == 'configuration'  }}" id="configuration">
               <h3>Configuration</h3>
               <form action="/updateConfig" method="POST" class="mt-3">
                 <div class="row mb-3">
@@ -118,7 +129,7 @@
                       <option value="opnsense" {% if config.apiType == "opnsense" %}selected{% endif %}>OPNSENSE</option>
                     </select>
                   </div>
-
+                  <input type="hidden" name="tab" value="configuration"/>
                   <div class="col-md-4">
                     <label class="form-label">Username</label>
                     <input type="text" class="form-control" name="username" value="{{ config.apiUser.userName }}" />
@@ -185,7 +196,7 @@
             </div>
 
             <!-- Advanced options Tab  -->
-            <div class="tab-pane fade" id="advanced">
+            <div class="tab-pane fade {{ 'show active' if tab == 'advanced'  }}" id="advanced">
               <h3>Advanced Settings</h3>
               <!-- Existing Logging Level Form -->
               <form class="mt-3">
@@ -203,17 +214,18 @@
                 <input
                   type="text"
                   class="form-control w-50"
-                  placeholder="e.g. */5 * * * *"
+                  placeholder="e.g. */5 * * * *,@daily,@weekly,@monthly"
                   id="schedule"
                   name="current_schedule"
                   value="{{ schedule }}"
                   disabled
                 />
+                <input type="hidden" name="tab" value="advanced"/>
                 <label class="form-label">Change Crontab Schedule</label>
                 <input
                   type="text"
                   class="form-control w-50"
-                  placeholder="e.g. */5 * * * *"
+                  placeholder="e.g. */5 * * * *,@daily,@weekly,@monthly"
                   id="schedule"
                   name="schedule"
                   
@@ -232,7 +244,7 @@
             </div>
 
             <!-- SECURITY TAB -->
-            <div class="tab-pane fade" id="security">
+            <div class="tab-pane fade {{ 'show active' if tab == 'security'  }}" id="security">
               <h3>User Management</h3>
 
               <button class="btn btn-success mb-3">Add User</button>
@@ -259,7 +271,7 @@
             </div>
 
             <!-- SETTINGS TAB -->
-            <div class="tab-pane fade" id="settings">
+            <div class="tab-pane fade {{ 'show active' if tab == 'settings'  }}" id="settings">
               <h3>Theme Settings</h3>
               <form class="mt-3">
                 <label class="form-label">Theme</label>

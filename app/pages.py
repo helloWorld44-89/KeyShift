@@ -18,10 +18,14 @@ def guest():
 @login_required
 def admin():
     cron = getCrontab()
-    schedule=cron[0].slices.render()
+    try:
+        schedule=cron[0].slices.render()
+    except Exception as e:
+        schedule = '@daily'
     myConfig = getConfig()
+    tab=request.args.get('tab','home')
     
-    return render_template("pages/admin.html",config = myConfig,current_user=current_user,cron = cron,schedule=schedule)
+    return render_template("pages/admin.html",config = myConfig,current_user=current_user,cron = cron,schedule=schedule,tab=tab)
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -53,8 +57,9 @@ def changeConfig():
     myConfig["apiType"] = newConfig["api_type"]
     myConfig["wifiInfo"]["SSID"]=newConfig["SSID"]
     myConfig["wifiInfo"]["ID"]=newConfig["wifiId"]
-    cronChange(newConfig['rotation_mode'])
-    return redirect(request.referrer)
+    #cronChange(newConfig['rotation_mode'])
+    
+    return redirect(url_for('pages.admin', tab=newConfig["tab"]))
 
 @bp.route("/manualCron",methods=["POST"])
 @login_required
