@@ -10,10 +10,8 @@ def cronChange(mode):
             # Edit the existing job        
             job = list(existingJobs)[0] # Get the first job found
             job.setall(mode)
-
             return f"Modified existing job: {job}"
         else:
-            
             return f"job not found: {existingJobs}"
         
 def getCrontab():
