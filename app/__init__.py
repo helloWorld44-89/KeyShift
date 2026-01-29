@@ -17,7 +17,11 @@ def create_app():
 
     db.init_app(app)
 
-    
+    from logging.config import dictConfig
+    from app.logging_config import LOGGING_CONFIG
+
+    dictConfig(LOGGING_CONFIG)
+
 
     from .pages import bp
     app.register_blueprint(bp, url_prefix = '/')

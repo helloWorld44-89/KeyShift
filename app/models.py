@@ -2,6 +2,9 @@ from flask_login import UserMixin
 from . import db
 from flask_bcrypt import bcrypt 
 import secrets
+import logging 
+
+log = logging.getLogger(__name__)
 
 class user(db.Model,UserMixin):
     __tablename__='users'   
@@ -15,7 +18,7 @@ class user(db.Model,UserMixin):
     def __repr__(self):
         return f'Username: {self.username}'
 
-    def newUser(userName,pw, role):
+    def newUser(userName,pw, role=0):
         try:
             salt=bcrypt.gensalt()
             _passwd = bcrypt.hashpw(pw.encode('utf-8'),salt)
@@ -23,6 +26,8 @@ class user(db.Model,UserMixin):
             newUser = user(username = userName, password = _passwd, active = True, admin = role,apiKey = api)
             db.session.add(newUser)
             db.session.commit()
+            log.info(f'{userName} has been added')
             return (f'{userName} has been added!')
         except Exception as e:
+            log.info(f"newUser Error : {e}")
             return f'An Error has occured: {e}'

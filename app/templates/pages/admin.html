@@ -243,11 +243,14 @@
               </form>
             </div>
 
-            <!-- SECURITY TAB -->
-            <div class="tab-pane fade {{ 'show active' if tab == 'security'  }}" id="security">
+           <!-- SECURITY TAB -->
+            <div class="tab-pane fade {{ 'show active' if tab == 'security' }}" id="security">
               <h3>User Management</h3>
 
-              <button class="btn btn-success mb-3">Add User</button>
+              <!-- Add User Button -->
+              <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                Add User
+              </button>
 
               <table class="table table-bordered">
                 <thead>
@@ -258,17 +261,133 @@
                   </tr>
                 </thead>
                 <tbody>
+                  {% for i in users %}
                   <tr>
-                    <td>admin</td>
-                    <td>Administrator</td>
+                    <td class="d-none" value="{{ i.id }}" id="userID"></td>
+                    <td>{{ i.username }}</td>
+                    <td>{{ 'Admin' if i.admin == True else 'User'}}</td>
                     <td>
-                      <button class="btn btn-sm btn-warning">Edit</button>
+                      <button class="btn btn-sm btn-warning editUser" data-bs-toggle="modal" data-bs-target="#editUserModal" >
+                        Edit
+                      </button>
                       <button class="btn btn-sm btn-danger">Delete</button>
                     </td>
                   </tr>
+                  {% endfor %}
                 </tbody>
               </table>
             </div>
+            <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+              <!-- New USER Modal -->
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content shadow-lg border-0 rounded-4">
+
+                <div class="modal-header border-0">
+                  <h5 class="modal-title fw-bold">Create New User</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body px-4">
+                  <form method="POST" action="/users/add">
+
+                    <div class="form-floating mb-3">
+                      <input type="text" class="form-control" id="newUsername" name="newUsername" placeholder="Username">
+                      <label for="newUsername">Username</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                      <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="Password">
+                      <label for="newPassword">Password</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                      <input type="password" class="form-control" id="newPasswordConfirm" name="newPasswordConfirm" placeholder="Confirm Password">
+                      <label for="newPasswordConfirm">Confirm Password</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                      <select class="form-select" id="newRole" name="newRole">
+                        <option value="user">User</option>
+                        <option value="admin">Administrator</option>
+                      </select>
+                      <label for="newRole">Role</label>
+                    </div>
+
+                    <div class="text-center mt-4">
+                      <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill">
+                        Create User
+                      </button>
+                    </div>
+
+                  </form>
+                </div>
+
+                <div class="modal-footer border-0">
+                  <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                    Close
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+            <!-- Edit USer Modal -->
+            <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content shadow-lg border-0 rounded-4">
+
+                  <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+
+                  <div class="modal-body px-4">
+                    <form method="POST" id="editUserForm">
+
+                      <input type="hidden" id="editUserId" name="editUserId">
+
+                      <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="editUsername" name="editUsername" placeholder="Username">
+                        <label for="editUsername">Username</label>
+                      </div>
+
+                      <div class="form-floating mb-3">
+                        <select class="form-select" id="editRole" name="editRole">
+                          <option value="user">User</option>
+                          <option value="admin">Administrator</option>
+                        </select>
+                        <label for="editRole">Role</label>
+                      </div>
+
+                      <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="editPassword" name="editPassword" placeholder="New Password">
+                        <label for="editPassword">New Password (optional)</label>
+                      </div>
+
+                      <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="editPasswordConfirm" name="editPasswordConfirm" placeholder="Confirm Password">
+                        <label for="editPasswordConfirm">Confirm Password</label>
+                      </div>
+
+                      <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill">
+                          Save Changes
+                        </button>
+                      </div>
+
+                    </form>
+                  </div>
+
+                  <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                      Close
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
 
             <!-- SETTINGS TAB -->
             <div class="tab-pane fade {{ 'show active' if tab == 'settings'  }}" id="settings">
@@ -288,7 +407,7 @@
         </div>
       </div>
     </div>
-
+    <script src="static/js/admin.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

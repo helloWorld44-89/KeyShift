@@ -1,6 +1,9 @@
 import requests
 import json
 from config import config
+import logging
+
+log = logging.getLogger("api.unifi")
 
 def changePW(pw):
     try:
@@ -27,10 +30,14 @@ def changePW(pw):
             'X-API-KEY': f'{apiKey}'}
         newResponse = session.put(update_url, headers=headers, json=dict, verify=False)
         if newResponse.status_code == 200:
-            print("Success: Wi-Fi password updated.")
+            log.info(f"Wi-Fi password changed to {pw}")
+            log.debug(f"Wi-Fi PW Changed: {dict} ")
             return "Success: Wi-Fi password updated."
         else:
-            print(f"Error: {newResponse.status_code} - {newResponse.text} ")
+            log.info(f"Error: {newResponse.status_code} - {newResponse.text} ")
+            log.debug(f"Error: {newResponse.status_code} - {newResponse.text}")
             return f"Error: {newResponse.status_code} - {newResponse.text}"
     except Exception as e:
+        log.info(f"Error: {e}")
+        log.debug(f"Error: {e}, JSON{dict}, apiKey: {apiKey}")
         return f"An Error has occured: {e}"

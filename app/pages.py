@@ -4,10 +4,13 @@ from flask_bcrypt import bcrypt
 from app.config.config import getConfig, updateConfig
 from flask_login import  login_user, login_required, logout_user, current_user
 import json
+from app import db
 from app.config.crontab import cronChange,getCrontab,manualCron
 from crontab import CronTab
+import logging 
 
 
+log = logging.getLogger(__name__)
 bp = Blueprint("pages", __name__)
 
 @bp.route("/")
@@ -17,6 +20,7 @@ def guest():
 @bp.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
+    users = user.query.all()
     cron = getCrontab()
     try:
         schedule=cron[0].slices.render()
@@ -25,7 +29,7 @@ def admin():
     myConfig = getConfig()
     tab=request.args.get('tab','home')
     
-    return render_template("pages/admin.html",config = myConfig,current_user=current_user,cron = cron,schedule=schedule,tab=tab)
+    return render_template("pages/admin.html",users=users,config = myConfig,current_user=current_user,cron = cron,schedule=schedule,tab=tab)
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -37,10 +41,13 @@ def login():
             if(bcrypt.checkpw(password.encode('utf-8'),_user.password)):
                 flash('Login success!','success')
                 login_user(_user)
+                log.info(f"{_username} logged in")
                 return redirect(url_for("pages.admin"))
             else:
+                log.warning(f"{_username} failed log in")
                 flash('Incorrect Username or Password', 'danger')
         else:
+            log.warning(f"{_username} failed log in")
             flash('Incorrect Username or Password', 'danger')
     return render_template("pages/login.html")
 
@@ -57,7 +64,9 @@ def changeConfig():
     myConfig["apiType"] = newConfig["api_type"]
     myConfig["wifiInfo"]["SSID"]=newConfig["SSID"]
     myConfig["wifiInfo"]["ID"]=newConfig["wifiId"]
-    #cronChange(newConfig['rotation_mode'])
+    cronChange(newConfig['rotation_mode'])
+    log.info(f"Config updated")
+    log.debug(f"Config updated {newConfig}")
     
     return redirect(url_for('pages.admin', tab=newConfig["tab"]))
 
@@ -65,7 +74,25 @@ def changeConfig():
 @login_required
 def manual():
     time =request.form["schedule"]
-    print(manualCron(time))
+    manualCron(time)
+    log.info(f"Custom Cron schedule updated: {time}")
     return redirect(request.referrer)
 
-
+@bp.route("users/add",methods=['POST'])
+@login_required
+def addNewUser():
+    userName=request.form.get("newUsername")
+    passWord=request.form.get("newPassword")
+    passWordConfirm = request.form.get("newPasswordConfirm")
+    role = request.form.get("newRole")
+    if role == 'admin':
+        role =1
+    else:
+        role = 0
+    if passWord == passWordConfirm:
+        user.newUser(userName,passWord,role)
+        log.info(f"New User Created: {userName}")
+        return redirect(url_for("pages.admin",tab="security"))
+    else:
+        log.error("Password Validation Failed for New User Creation")
+        return redirect(url_for("pages.admin",tab="security",))

@@ -1,5 +1,7 @@
 import json
+import logging
 
+log= logging.getLogger("config.config")
 
 
 def getConfig():
@@ -14,10 +16,13 @@ def getConfig():
         return data
 
     except FileNotFoundError:
+        log.info(f"Error: The file '{file_path}' was not found.")
         return f"Error: The file '{file_path}' was not found."
     except json.JSONDecodeError as e:
+        log.info(f"Error decoding JSON from '{file_path}': {e}")
         return f"Error decoding JSON from '{file_path}': {e}"
     except Exception as e:
+        log.info(f"Error: {e}")
         return f"An unexpected error occurred: {e}"
     
 def updatePW(password):
@@ -31,10 +36,13 @@ def updatePW(password):
             json.dump(data,f,indent=4)
         return data
     except FileNotFoundError:
+        log.info(f"Error: The file '{file_path}' was not found.")
         return f"Error: The file '{file_path}' was not found."
     except json.JSONDecodeError as e:
+        log.info(f"Error decoding JSON from '{file_path}': {e}")
         return f"Error decoding JSON from '{file_path}': {e}"
     except Exception as e:
+        log.info(f"Error: {e}")
         return f"An unexpected error occurred: {e}"
     
 def updateConfig(newConfig):
@@ -47,6 +55,8 @@ def updateConfig(newConfig):
             json.dump(newConfig, json_file, indent=4) # Using 'indent' for pretty-printing
         return f"Successfully updated config to {filename}"
     except IOError as e:
+       log.info(f"Error writing to file {filename}: {e}")
        return f"Error writing to file {filename}: {e}"
     except Exception as e:
+        log.info(f"Error: {e}")
         return f"An unexpected error occurred: {e}"

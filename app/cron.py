@@ -2,17 +2,26 @@ from utilities.genPW import genPW
 from utilities.genQR import genQRCode
 import datetime
 from config import config
-from api import unifi
+from api import unifi,omada
+import logging
+
+log=logging.getLogger("cron")
 
 myconfig= config.getConfig()
 now=datetime.datetime.now()
-
-pw = genPW()
-genQRCode(pw)
-### Added API Call code here for changing the password
-print(unifi.changePW(pw))
-###add new password to config file
-config.updatePW(pw)
-
-with open("/app/app/cron.log","a") as file:
-    file.write(f"{now}|PW: {pw} | QRCode created ")
+try:
+     ## Generate a complex PW   
+    pw = genPW() 
+    ### API Call to change PW
+    if myconfig["apiType"] == 'unifi':
+        unifi.changePW(pw)
+    elif myconfig["apitype"] == 'omada':
+        omada.omadaPW(pw)
+    else:
+        raise Exception(f"An unknown Api Type was specififed: {myconfig["apiType"]}")
+    ### Add new password to config file
+    config.updatePW(pw)
+    genQRCode(pw)
+    log.info(f"PW: {pw}")
+except Exception as e:
+    log.info(f"Error: {e}")
