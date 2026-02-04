@@ -1,13 +1,15 @@
 import requests
 import json
-from config import config
+from app.config import config
 import logging
+from app.models import SSID as s
 
 log = logging.getLogger("api.unifi")
-
+myConfig= config.getConfig()
+session=requests.Session()
 def changePW(pw):
     try:
-        myConfig= config.getConfig()
+        
         gwIP = myConfig['controllerIp']
         wifiId = myConfig['wifiInfo']['ID']
         siteID=myConfig["siteId"]
@@ -15,7 +17,6 @@ def changePW(pw):
         newPW =pw
         # Disable SSL warnings for self-signed certificates
         requests.packages.urllib3.disable_warnings()
-        session = requests.Session()
         update_url = f"https://{gwIP}/proxy/network/integration/v1/sites/{siteID}/wifi/broadcasts/{wifiId}"
         headers= {
             'Accept': 'application/json',
@@ -42,62 +43,51 @@ def changePW(pw):
         log.debug(f"Error: {e}, JSON{dict}, apiKey: {apiKey}")
         return f"An Error has occured: {e}"
     
+def getSiteID():
     
-def getUNIFIssids():
+        requests.packages.urllib3.disable_warnings()
+        gwIP = myConfig['controllerIp']
+        headers= {
+            'Accept': 'application/json',
+            'X-API-KEY': f'{myConfig["apiUser"]["apiKey"]}'}
+        response=session.get(f"https://{gwIP}/proxy/network/integration/v1/sites",headers=headers, verify=False)
+        siteList=[]
+        for site in response.json().get("data", []):
+            siteList.append(site["id"])
 
-    myConfig= config.getConfig()
+        return siteList
+
+def getWifiID(siteList):
+    requests.packages.urllib3.disable_warnings()
     gwIP = myConfig['controllerIp']
-    wifiId = myConfig['wifiInfo']['ID']
-    site=myConfig["siteId"]
-    apiKey=myConfig["apiUser"]["apiKey"]
+    headers= {
+        'Accept': 'application/json',
+        'X-API-KEY': f'{myConfig["apiUser"]["apiKey"]}'}
+    wifiList=[]
+    for i in siteList:
+        response=session.get(f"https://{gwIP}/proxy/network/integration/v1/sites/{i}/wifi/broadcasts",headers=headers, verify=False)
+        for x in response.json().get("data", []):
+            wifiList.append(x.get("id"))    
+    return wifiList
 
-    base_url=f"https://{gwIP}"
-    username=myConfig["apiUser"]["userName"]
-    password=myConfig["apiUser"]["passWord"]
-    verify_ssl: bool = False,
-    timeout: int = 30
+def getSSIDInfo(siteIDs,wlans):
+    requests.packages.urllib3.disable_warnings()
+    gwIP = myConfig['controllerIp']
+    headers= {
+        'Accept': 'application/json',
+        'X-API-KEY': f'{myConfig["apiUser"]["apiKey"]}'}
+    ssidList=[]
+    for i in siteIDs:
+        for j in wlans:
+            response=session.get(f"https://{gwIP}/proxy/network/integration/v1/sites/{i}/wifi/broadcasts/{j}",headers=headers, verify=False)
+            if response.status_code == 200:
+                wifi=s(sidName=response.json()['name'], ssidPW=response.json()['securityConfiguration']['passphrase'],
+                       siteID=i,
+                       ssidID=j,
+                       status=response.json()['enabled'])
+                ssidList.append(wifi)
+    return ssidList
 
-
-    s = requests.Session()
-    s.verify = verify_ssl
-    s.headers.update({"Accept": "application/json", "Content-Type": "application/json"})
-
-    # ----- 1. Login to UniFi OS (/api/auth/login) -----
-    r = s.post(
-        f"{base_url}/api/auth/login",
-        json={"username": username, "password": password},
-        timeout=timeout
-    )
-    r.raise_for_status()
-
-    # All network API calls go under `/proxy/network/...` for UniFi OS
-    def api(path: str) -> str:
-        return f"{base_url}/proxy/network{path}"
-
-    # ----- 2. Get SSIDs from /rest/wlanconf -----
-    r = s.get(api(f"/api/s/{site}/rest/wlanconf"), timeout=timeout)
-    r.raise_for_status()
-    wlanconfs = r.json().get("data", [])  
-
-    ssids = [{"name": w.get("name"), "enabled": bool(w.get("enabled", True))}
-             for w in wlanconfs]
-
-    # ----- 3. Get Clients from /stat/sta -----
-    r = s.get(api(f"/api/s/{site}/stat/sta"), timeout=timeout)
-    r.raise_for_status()
-    clients = r.json().get("data", [])
-    counts = {}
-    for c in clients:
-        ssid = c.get("essid")
-        if ssid:
-            counts[ssid] = counts.get(ssid, 0) + 1
-
-    # ----- 4. Build return objects -----
-    summaries = []
-    for ssid in ssids:
-        summaries.append(
-                ssid["name"],
-                "Enabled" if ssid["enabled"] else "Disabled",
-                counts.get(ssid["name"], 0),
-        )
-    return summaries
+siteList=getSiteID()
+wifiList=getWifiID(siteList)
+print(getSSIDInfo(siteList,wifiList))

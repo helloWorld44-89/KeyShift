@@ -31,3 +31,42 @@ class user(db.Model,UserMixin):
         except Exception as e:
             log.info(f"newUser Error : {e}")
             return f'An Error has occured: {e}'
+        
+class SSID(db.Model):
+    __tablename__='ssids'   
+    id=db.Column(db.Integer, primary_key=True)
+    ssidName=db.Column(db.Text, nullable=False)
+    ssidPW=db.Column(db.Text)
+    siteID=db.Column(db.Text)
+    wlanGroupID=db.Column(db.Text)
+    ssidID=db.Column(db.Text)
+    status=db.Column(db.Boolean, default=True)
+    pwRotate=db.Column(db.Boolean, default=False)
+    rotateFrequency=db.Column(db.Text, default=None)
+    qrCode=db.Column(db.Boolean, default=False)
+    isGuest=db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f'SSID: {self.ssidName} SiteID: {self.siteID} WLANGroupID: {self.wlanGroupID} SSIDID: {self.ssidID}'
+    
+    def __init__(self, ssidName, ssidPW, siteID, wlanGroupID, ssidID,  status=True, pwRotate=False, qrCode=False, isGuest=False):
+        self.ssidName= ssidName
+        self.ssidPW= ssidPW
+        self.siteID= siteID
+        self.wlanGroupID= wlanGroupID
+        self.ssidID= ssidID
+        self.status= status
+        self.pwRotate= pwRotate
+        self.qrCode= qrCode
+        self.isGuest= isGuest
+    
+    def newSSID(ssidName, ssidPW, siteID, wlanGroupID, ssidID, status=True, pwRotate=False, qrCode=False, isGuest=False):
+        try:
+            newSSID = SSID(ssidName = ssidName, ssidPW = ssidPW, siteID = siteID, wlanGroupID = wlanGroupID, ssidID = ssidID, status=status, pwRotate=pwRotate, qrCode=qrCode, isGuest=isGuest)
+            # db.session.add(newSSID)
+            # db.session.commit()
+            # log.info(f'SSID {ssidName} has been added')
+            return (f'SSID {ssidName} has been added!')
+        except Exception as e:
+            log.info(f"newSSID Error : {e}")
+            return f'An Error has occured: {e}'
