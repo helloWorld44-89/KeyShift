@@ -32,7 +32,6 @@ def updatePW(password):
         data = getConfig()
         data["wifiInfo"]["password"] = password
         with open(file_path, 'w') as f:
-            
             json.dump(data,f,indent=4)
         return data
     except FileNotFoundError:
@@ -46,13 +45,10 @@ def updatePW(password):
         return f"An unexpected error occurred: {e}"
     
 def updateConfig(newConfig):
-    # Specify the filename
     filename = "app/config/config copy.json"
-
-    # Open the file in write mode ('w') and dump the dictionary to it
     try:
         with open(filename, 'w') as json_file:
-            json.dump(newConfig, json_file, indent=4) # Using 'indent' for pretty-printing
+            json.dump(newConfig, json_file, indent=4)
         return f"Successfully updated config to {filename}"
     except IOError as e:
        log.info(f"Error writing to file {filename}: {e}")

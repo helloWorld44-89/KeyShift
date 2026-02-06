@@ -37,10 +37,12 @@ class SSID(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     ssidName=db.Column(db.Text, nullable=False)
     ssidPW=db.Column(db.Text)
+    #lastChanged=db.Column(db.DateTime, default=None)
     siteID=db.Column(db.Text)
-    wlanGroupID=db.Column(db.Text)
+    wlanGroupID=db.Column(db.Text,default=None)
     ssidID=db.Column(db.Text)
     status=db.Column(db.Boolean, default=True)
+    #hidden=db.Column(db.Boolean, default=False)
     pwRotate=db.Column(db.Boolean, default=False)
     rotateFrequency=db.Column(db.Text, default=None)
     qrCode=db.Column(db.Boolean, default=False)
@@ -63,9 +65,9 @@ class SSID(db.Model):
     def newSSID(ssidName, ssidPW, siteID, wlanGroupID, ssidID, status=True, pwRotate=False, qrCode=False, isGuest=False):
         try:
             newSSID = SSID(ssidName = ssidName, ssidPW = ssidPW, siteID = siteID, wlanGroupID = wlanGroupID, ssidID = ssidID, status=status, pwRotate=pwRotate, qrCode=qrCode, isGuest=isGuest)
-            # db.session.add(newSSID)
-            # db.session.commit()
-            # log.info(f'SSID {ssidName} has been added')
+            db.session.add(newSSID)
+            db.session.commit()
+            log.info(f'SSID {ssidName} has been added to the database.')
             return (f'SSID {ssidName} has been added!')
         except Exception as e:
             log.info(f"newSSID Error : {e}")

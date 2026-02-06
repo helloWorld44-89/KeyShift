@@ -1,22 +1,21 @@
 import qrcode
-from config import config
+from ..config import config
 import os
+from ..models import SSID
 import logging
 
 log = logging.getLogger("utilities.genQR")
 
-def genQRCode(password):
+def genQRCode(ssid:SSID,password):
     try:
         BASE_DIR = os.path.abspath(os.path.dirname("static")) 
         imgPath = os.path.join("/app","app","static","img") 
-        myConfig = config.getConfig()
-        ssid= myConfig['wifiInfo']['SSID']
         security_type="WPA"
         hidden=False
-        filename="guestqrcode.png"
+        filename=f"{ssid.ssidName}.png"
         # Construct the Wi-Fi configuration string in the standard format
         # WIFI:S:<SSID>;T:<security_type>;P:<password>;H:<hidden_status>;
-        wifi_data = f"WIFI:S:{ssid};T:{security_type};P:{password};"
+        wifi_data = f"WIFI:S:{ssid.ssidName};T:{security_type};P:{password};"
         if hidden:
             wifi_data += "H:true;"
         wifi_data += ";"
@@ -41,5 +40,5 @@ def genQRCode(password):
         log.info(f"QR Saved: {imgPath}/{filename}")
         return(f"QR code saved as {filename}")
     except Exception as e:
-        log.info(f"Error: {e}")
+        log.error(f"Error: {e}")
         log.debug(f"Error: {e} | Params: {password}; WifiData: {wifi_data}")

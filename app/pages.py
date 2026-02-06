@@ -1,13 +1,15 @@
-from flask import Blueprint, render_template, request, url_for, redirect,flash
-from .models import user
+from flask import Blueprint, render_template, request, url_for, redirect,flash, send_file,abort
+from .models import user, SSID
 from flask_bcrypt import bcrypt
 from app.config.config import getConfig, updateConfig
 from flask_login import  login_user, login_required, logout_user, current_user
 import json
+from pathlib import Path
 from app import db
-from app.config.crontab import cronChange,getCrontab,manualCron
+from app.config.crontab import cronChange,getCrontab,manualCron,createCron
 from crontab import CronTab
 import logging 
+from .api.omada import OMADA
 
 
 log = logging.getLogger(__name__)
@@ -96,3 +98,33 @@ def addNewUser():
     else:
         log.error("Password Validation Failed for New User Creation")
         return redirect(url_for("pages.admin",tab="security",))
+    
+@bp.route("/initdb")
+def initdb():
+    info=OMADA.initDBinfo()
+    return info
+@bp.route("/qr/<name>")
+def getImage(name):
+    filePath = Path(f"static/img/{name}.png")
+    if filePath.exists():
+        log.info(f"Qr Code accessed for {name}")
+        return send_file(f"static/img/{name}.png")
+    else:
+        log.error(f"QRCode getImage: 404 no image found for {filePath}")
+        abort(404,description="Resource Not Found")
+
+@bp.route("/changepw/<int:id>")
+def changePW(id:int):
+    ssid=SSID.query.get(id)
+    info=OMADA.changePW(ssid, "NewPassword123!!")
+    if info is True:
+        ssid.ssidPW="NewPassword123!!"
+        db.session.add(ssid)
+        db.session.commit()
+    return {"message":'Success'}
+
+@bp.route("/createCron/<int:id>")
+def AddCronJob(id):
+    ssid=SSID.query.get(id)
+    print(cronChange(ssid))
+    return {"message":'Success'}
