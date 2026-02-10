@@ -6,13 +6,15 @@ import logging
 
 log = logging.getLogger("utilities.genQR")
 
-def genQRCode(ssid:SSID,password):
+def genQRCode(ssid:SSID,password=None):
     try:
         BASE_DIR = os.path.abspath(os.path.dirname("static")) 
-        imgPath = os.path.join("/app","app","static","img") 
+        imgPath = os.path.join(BASE_DIR,"app","static","img") 
         security_type="WPA"
         hidden=False
         filename=f"{ssid.ssidName}.png"
+        if password == None:
+            password = ssid.ssidPW
         # Construct the Wi-Fi configuration string in the standard format
         # WIFI:S:<SSID>;T:<security_type>;P:<password>;H:<hidden_status>;
         wifi_data = f"WIFI:S:{ssid.ssidName};T:{security_type};P:{password};"

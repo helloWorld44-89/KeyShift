@@ -72,3 +72,39 @@ class SSID(db.Model):
         except Exception as e:
             log.info(f"newSSID Error : {e}")
             return f'An Error has occured: {e}'
+    
+    def makeGuest(self):
+        try:
+            guestSSID = SSID.query.filter_by(isGuest=True).first()
+            if guestSSID.id == self.id:
+                log.info(f"{self.ssidName} is already the guest SSID.")
+                return f"{self.ssidName} is already the guest SSID."
+            else:
+                guestSSID.isGuest = False
+                self.isGuest = True
+                db.session.commit()
+                log.info(f"{self.ssidName} is now the guest SSID.")
+                return f"{self.ssidName} is now the guest SSID."
+        except Exception as e:
+            log.error(f"makeGuest Error : {e}")
+            return f'An Error has occured: {e}'
+    
+    def addRotation(self, rotateFrequency):
+        try:
+            print(rotateFrequency)
+            if rotateFrequency != None:
+                self.pwRotate = True
+                self.rotateFrequency = rotateFrequency
+                db.session.commit()
+                log.info(f"Password rotation added to {self.ssidName} with frequency {rotateFrequency}.")
+                return f"Password rotation added to {self.ssidName} with frequency {rotateFrequency}."
+            else:
+                self.pwRotate = False
+                self.rotateFrequency = None
+                db.session.commit()
+                log.info(f"Password rotation removed from {self.ssidName}.")
+                return f"Password rotation removed from {self.ssidName}."
+        except Exception as e:
+            log.error(f"addRotation Error : {e}")
+            return f'An Error has occured: {e}'
+           

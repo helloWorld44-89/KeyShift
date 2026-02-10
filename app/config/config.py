@@ -45,7 +45,7 @@ def updatePW(password):
         return f"An unexpected error occurred: {e}"
     
 def updateConfig(newConfig):
-    filename = "app/config/config copy.json"
+    filename = "app/config/config.json"
     try:
         with open(filename, 'w') as json_file:
             json.dump(newConfig, json_file, indent=4)

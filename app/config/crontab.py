@@ -6,7 +6,6 @@ log= logging.getLogger("config.crontab")
 #filePath = '/etc/cron.d/qrCron'
 filePath = './app/crontab'
 def cronChange(ssid:SSID):
-
     with CronTab(tabfile=filePath) as cron:
         # Look for an existing job using a specific comment
         jobComment = ssid.ssidName
@@ -22,18 +21,25 @@ def cronChange(ssid:SSID):
             log.error(f"job not found: {existingJobs}")
             return f"job not found: {existingJobs}"
         
-def getCrontab():
+def getCrontab(comment=None):
     try:
-        file = CronTab(tabfile=filePath)
-        return file
+        with CronTab(tabfile=filePath) as cron:
+            existingJobs = list(cron.find_comment(comment))
+            if existingJobs:
+                job=existingJobs[0]
+                log.info(f"Found existing job: {job}")
+                return job
+            else:
+                log.info(f"No existing job found with comment: {comment}")
+                return f"No existing job found for SSID: {comment}"       
     except Exception as e:
         log.error({e})
         return f"An Error has occured: {e}"
 
-def manualCron(time):
+def manualCron(time,name):
     with CronTab(tabfile=filePath) as cron:
         # Look for an existing job using a specific comment
-        jobComment = "Job for changing guest password on rotation"
+        jobComment = name
         existingJobs = cron.find_comment(jobComment)
         if existingJobs:
             # Edit the existing job        
@@ -59,4 +65,19 @@ def createCron(ssid:SSID):
         log.error(e)
         return f"An Error has occured: {e}"
 
-
+def deleteCron(ssid:SSID):
+    try:
+        with CronTab(tabfile=filePath) as cron:
+            existingJobs = cron.find_comment(ssid.ssidName)
+            if existingJobs:
+                job = list(existingJobs)[0]
+                cron.remove(job)
+                cron.write()
+                log.info(f"Deleted cron job: {job}")
+                return f"Deleted cron job: {job}"
+            else:
+                log.info(f"No existing job found with comment: {ssid.ssidName}")
+                return f"No existing job found for SSID: {ssid.ssidName}"
+    except Exception as e:
+        log.error(e)
+        return f"An Error has occured: {e}"

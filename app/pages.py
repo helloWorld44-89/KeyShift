@@ -6,24 +6,30 @@ from flask_login import  login_user, login_required, logout_user, current_user
 import json
 from pathlib import Path
 from app import db
-from app.config.crontab import cronChange,getCrontab,manualCron,createCron
+from app.utilities.genPW import genPW
+from app.utilities.genQR import genQRCode
+from app.config.crontab import cronChange,getCrontab,manualCron,createCron,deleteCron
 from crontab import CronTab
 import logging 
 from .api.omada import OMADA
-
+from .api.unifi import UNIFI
 
 log = logging.getLogger(__name__)
 bp = Blueprint("pages", __name__)
 
 @bp.route("/")
 def guest():
-    return render_template("pages/index.html")
+    ssids=db.session.query(SSID)
+    guestSSID = ssids.filter_by(isGuest=True).first()
+    return render_template("pages/index.html",guest=guestSSID)
 
 @bp.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
     users = user.query.all()
-    cron = getCrontab()
+    ssids=db.session.query(SSID)
+    guestSSID = ssids.filter_by(isGuest=True).first()
+    cron = getCrontab(guestSSID.ssidName) 
     try:
         schedule=cron[0].slices.render()
     except Exception as e:
@@ -31,7 +37,7 @@ def admin():
     myConfig = getConfig()
     tab=request.args.get('tab','home')
     
-    return render_template("pages/admin.html",users=users,config = myConfig,current_user=current_user,cron = cron,schedule=schedule,tab=tab)
+    return render_template("pages/admin.html",users=users,config = myConfig,current_user=current_user,cron = cron,schedule=schedule,tab=tab,ssids=ssids,guest=guestSSID)
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -62,21 +68,19 @@ def changeConfig():
     myConfig["apiUser"]["passWord"] = newConfig["password"]
     myConfig["apiUser"]["apiKey"] = newConfig["apiKey"]
     myConfig["controllerIp"]=newConfig["controller_host"]
-    myConfig["siteId"] = newConfig["siteId"]
     myConfig["apiType"] = newConfig["api_type"]
-    myConfig["wifiInfo"]["SSID"]=newConfig["SSID"]
-    myConfig["wifiInfo"]["ID"]=newConfig["wifiId"]
-    cronChange(newConfig['rotation_mode'])
+    updateConfig(myConfig)
     log.info(f"Config updated")
     log.debug(f"Config updated {newConfig}")
     
     return redirect(url_for('pages.admin', tab=newConfig["tab"]))
 
-@bp.route("/manualCron",methods=["POST"])
+@bp.route("/manualCron/<int:id>",methods=["POST"])
 @login_required
-def manual():
+def manual(id):
     time =request.form["schedule"]
-    manualCron(time)
+    name = SSID.query.get(id).ssidName
+    manualCron(time, name)
     log.info(f"Custom Cron schedule updated: {time}")
     return redirect(request.referrer)
 
@@ -99,10 +103,14 @@ def addNewUser():
         log.error("Password Validation Failed for New User Creation")
         return redirect(url_for("pages.admin",tab="security",))
     
-@bp.route("/initdb")
+@bp.route("/init")
 def initdb():
-    info=OMADA.initDBinfo()
-    return info
+    #info=OMADA.initDBinfo()
+    ssids=db.session.query(SSID)
+    for i in ssids:
+        genQRCode(i)
+    return render_template("pages/login.html")
+
 @bp.route("/qr/<name>")
 def getImage(name):
     filePath = Path(f"static/img/{name}.png")
@@ -115,16 +123,74 @@ def getImage(name):
 
 @bp.route("/changepw/<int:id>")
 def changePW(id:int):
-    ssid=SSID.query.get(id)
-    info=OMADA.changePW(ssid, "NewPassword123!!")
-    if info is True:
-        ssid.ssidPW="NewPassword123!!"
-        db.session.add(ssid)
-        db.session.commit()
-    return {"message":'Success'}
-
+    try:
+        myconfig = getConfig()
+        ssid=SSID.query.get(id)
+        pw = request.args.get("pw",'auto')
+        if pw != 'auto':
+            if myconfig["apiType"] == "omada":
+                info=OMADA.changePW(ssid,pw)
+            elif myconfig["apiType"] == "unifi":    
+                info=UNIFI.changePW(ssid,pw)
+            else:
+                log.error(f"Invalid API Type: {myconfig['apiType']}")
+                return abort(404, f"Error changing password: Invalid API Type {myconfig['apiType']}") 
+        else:
+            pw=genPW()
+            if myconfig["apiType"] == "omada":
+                info=OMADA.changePW(ssid,pw)
+            elif myconfig["apiType"] == "unifi":    
+                info=UNIFI.changePW(ssid,pw)
+            else:
+                log.error(f"Invalid API Type: {myconfig['apiType']}")
+                return abort(404, f"Error changing password: Invalid API Type {myconfig['apiType']}")    
+        if info is True:
+            ssid.ssidPW=pw
+            db.session.add(ssid)
+            db.session.commit()
+            log.info(f"Password changed for {ssid.ssidName}")
+            log.debug(f"Password changed for {ssid.ssidName} to {pw}")
+            return {"message":'Success'}
+        else:
+            log.error(f"Error changing password for {ssid.ssidName}: {info}")
+            return {"message":f"Error changing password: {info}"}
+    except Exception as e:
+        log.error(f"Error changing password: {e}")
+        return abort(500,f"An Error has occured: {e}")
+    
 @bp.route("/createCron/<int:id>")
 def AddCronJob(id):
+    try:
+        rotate=request.args.get("rotateFrequency")
+        ssid=SSID.query.get(id)
+        if rotate == "None":
+            deleteCron(ssid)
+            ssid.addRotation(None)
+            log.info(f"Cron job deleted for SSID: {ssid.ssidName}")
+            return redirect(request.referrer)
+        else:
+            ssid.addRotation(rotate)
+            cron =getCrontab(ssid.ssidName)
+            createCron(ssid)
+            log.info(f"Cron job created for SSID: {ssid.ssidName} with schedule {rotate}")
+        return redirect(request.referrer)
+    except Exception as e:
+        log.error(f"Create Cron Error: {e}")
+        return f"An Error has occured: {e}"
+    
+@bp.route("makeguest/<int:id>")
+def guestSwap(id):
     ssid=SSID.query.get(id)
-    print(cronChange(ssid))
-    return {"message":'Success'}
+    ssid.makeGuest()
+    return redirect(request.referrer)
+
+@bp.route("/log",methods=["POST"])
+@login_required
+def logAction():
+    try:
+        data = request.get_json()
+        log.info(f"{current_user.username}: {data['message']}")
+        return {"message": "Action logged successfully"}
+    except Exception as e:
+        log.error(f"Error logging action: {e}")
+        return {"message": f"An Error has occured: {e}"}, 500
