@@ -7,33 +7,45 @@
     />
     <link rel="icon" href="static/img/KeyShift.png" type="image/png" />
     <title>Guest WIFI</title>
-    <link rel="stylesheet" type="text/css" href="static/css/styles.css" />
-    <link rel="stylesheet" type="text/css" href="static/css/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/styles.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.css" />
   </head>
-  <body>
-    <div class="background d-flex align-items-center">
-      <div class="container-lg glass-effect flex-column">
-        <div class="flex-column">
-          <h3 class="text-center mt-3">
-            Scan the code
-            <hr class="mt-0 mb-0 w-25" />
-            <small class="text-body-secondary mt-0"
-              >for Guest Wifi Access</small
-            >
-          </h3>
+<body class="background">
+  <div class="page-wrap container">
+    <div class="w-100" style="max-width: 860px;">
+      <!-- Header
+      <header class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <div class="d-flex align-items-center gap-2">
+          <span class="brand-badge text-primary-emphasis">Guest Wi‑Fi</span>
+          <span class="vr"></span>
+          <span class="text-secondary">Scan to join</span>
         </div>
-        <div
-          class="mx-auto"
-          style="width: 80vw; max-width: 350px; aspect-ratio: 1 / 1"
-        >
-          <img
-            src="static/img/{{ guest.ssidName }}.png"
-            class="w-100 h-100 p-3 p-md-5"
-            style="object-fit: contain"
-          />
+      </header> -->
+
+      <!-- Main Card -->
+      <div class="card rounded-4 overflow-hidden" style="min-height: 600px;">
+        <div class="row g-0">
+          <div class="col-12 p-4 p-lg-5 d-flex flex-column ">
+            <div>
+              <div class="muted-kicker">Welcome</div>
+              <h1 class="h3 fw-semibold mb-2">Connect to {{ guest.ssidName }} Wi‑Fi</h1>
+              <p class="text-secondary mb-0">
+                Scan this code with your phone’s camera to join instantly.
+              </p>
+            </div>
+          
+            <!-- QR section -->
+            <section class="text-center">
+              <div id="qrBox" class="qr-box">
+                <div id="qrcode" role="img" aria-label="Wi‑Fi QR code">
+                  <img src="/static/img/{{ guest.ssidName }}.png" alt="Wi-Fi QR Code">
+                </div>
+              </div>
+            </section>
+          </div>
+          </div>
         </div>
       </div>
-    </div>
-    <script src="static/js/bootstrap.bundle.js"></script>
-  </body>
+  </div>
+</body>
 </html>

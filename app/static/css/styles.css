@@ -11,3 +11,49 @@
   border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
+:root {
+  --qr-size: 410px;
+}
+.page-wrap {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+.brand-badge {
+  letter-spacing: .06em;
+  font-weight: 700;
+}
+.card {
+  border: 1px solid var(--bs-border-color-translucent);
+  box-shadow: 0 10px 30px rgba(0,0,0,.08);
+}
+.qr-box {
+  width: var(--qr-size);
+  height: var(--qr-size);
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse at center, rgba(0,0,0,.05) 0, rgba(0,0,0,0) 70%),
+    var(--bs-body-bg);
+  border-radius: .75rem;
+  border: 1px dashed var(--bs-border-color);
+  margin-inline: auto;
+}
+.muted-kicker {
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-size: .78rem;
+  color: var(--bs-secondary-color);
+}
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+@media print {
+  .no-print { display: none !important; }
+  .qr-box { border: none; }
+  body { background: #fff !important; }
+  .card { box-shadow: none !important; border: none !important; }
+}

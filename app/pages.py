@@ -194,3 +194,9 @@ def logAction():
     except Exception as e:
         log.error(f"Error logging action: {e}")
         return {"message": f"An Error has occured: {e}"}, 500
+
+@bp.route("/network/qr/<int:id>")
+@login_required
+def networkQR(id):
+    guest = SSID.query.get(id)
+    return render_template("pages/index.html",guest=guest)
