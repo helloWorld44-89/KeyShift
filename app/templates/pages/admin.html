@@ -65,6 +65,11 @@
               {{ "true" if tab=='settings' else 'false' }}
               >Settings</a
             >
+            <a
+              class="list-group-item list-group-item-action bg-dark text-light"
+              href="/logout"
+              >Logout</a
+            >
           </div>
         </div>
 
@@ -117,7 +122,7 @@
                           <li ><a href="/createCron/{{ i.id }}?rotateFrequency=@weekly" class="dropdown-item {{ "disabled" if i.rotateFrequency == '@weekly' }}">Weekly</a></li>
                           <li ><a href="/createCron/{{ i.id }}?rotateFrequency=@monthly" class="dropdown-item {{ "disabled" if i.rotateFrequency == '@monthly' }}">Monthly</a></li>
                         </ul>
-                        <button class="btn btn-info ssidEdit disabled"><a class="btn" href="/changepw/{{ i.id }}"> Change PW</a></button>
+                        <button class="btn btn-info disabled"><a class="btn" href="/changepw/{{ i.id }}"> Change PW</a></button>
                       </div></td>
                       
                     </tr>

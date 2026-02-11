@@ -19,17 +19,29 @@ bp = Blueprint("pages", __name__)
 
 @bp.route("/")
 def guest():
+    users = user.query.all()
+    if len(users) == 0:
+        return redirect(url_for("pages.initApp"))
     ssids=db.session.query(SSID)
     guestSSID = ssids.filter_by(isGuest=True).first()
     return render_template("pages/index.html",guest=guestSSID)
+
+@bp.route("/initApp", methods=["GET","POST"])
+def initApp():
+    return render_template("pages/initApp.html")
 
 @bp.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
     users = user.query.all()
+    if len(users) == 0:
+        return redirect(url_for("pages.initApp"))
     ssids=db.session.query(SSID)
     guestSSID = ssids.filter_by(isGuest=True).first()
-    cron = getCrontab(guestSSID.ssidName) 
+    if guestSSID:
+        cron = getCrontab(guestSSID.ssidName) 
+    else:
+        cron = '@daily root /usr/local/bin/python3 /app/app/cron.py'
     try:
         schedule=cron[0].slices.render()
     except Exception as e:
@@ -41,6 +53,10 @@ def admin():
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
+    print(len(user.query.all()))
+    if len(user.query.all()) < 1:
+        log.info("No users found, redirecting to initApp")
+        return redirect(url_for("pages.initApp"))
     if request.method == 'POST':
         _username = request.form["username"]
         password = request.form["password"]
@@ -59,16 +75,27 @@ def login():
             flash('Incorrect Username or Password', 'danger')
     return render_template("pages/login.html")
 
+@bp.route("/logout")
+@login_required
+def logout():
+    log.info(f"{current_user.username} logged out")
+    logout_user()
+    return redirect(url_for("pages.login"))
+
 @bp.route("/updateConfig", methods=['POST'])
 @login_required
 def changeConfig():
     myConfig = getConfig()
     newConfig = request.form.to_dict()
-    myConfig["apiUser"]["userName"] = newConfig["username"]
-    myConfig["apiUser"]["passWord"] = newConfig["password"]
-    myConfig["apiUser"]["apiKey"] = newConfig["apiKey"]
-    myConfig["controllerIp"]=newConfig["controller_host"]
     myConfig["apiType"] = newConfig["api_type"]
+    if myConfig["apiType"] == 'unifi':
+        myConfig["apiUser"]["apiKey"] = newConfig["apiKey"] or None
+    elif myConfig["apiType"] == 'omada':
+        myConfig["apiUser"]["userName"] = newConfig["username"] or None
+        myConfig["apiUser"]["passWord"] = newConfig["password"] or None
+    else:
+        log.error(f'API Type Unknown: {newConfig["api_type"]}')
+    myConfig["controllerIp"]=newConfig["controller_host"]
     updateConfig(myConfig)
     log.info(f"Config updated")
     log.debug(f"Config updated {newConfig}")
@@ -85,33 +112,66 @@ def manual(id):
     return redirect(request.referrer)
 
 @bp.route("users/add",methods=['POST'])
-@login_required
 def addNewUser():
-    userName=request.form.get("newUsername")
-    passWord=request.form.get("newPassword")
-    passWordConfirm = request.form.get("newPasswordConfirm")
-    role = request.form.get("newRole")
-    if role == 'admin':
-        role =1
-    else:
-        role = 0
-    if passWord == passWordConfirm:
-        user.newUser(userName,passWord,role)
-        log.info(f"New User Created: {userName}")
-        return redirect(url_for("pages.admin",tab="security"))
-    else:
-        log.error("Password Validation Failed for New User Creation")
-        return redirect(url_for("pages.admin",tab="security",))
-    
+    try:
+        if current_user.is_authenticated or request.referrer.endswith("/initApp"):
+            userName=request.form.get("newUsername")
+            passWord=request.form.get("newPassword")
+            passWordConfirm = request.form.get("newPasswordConfirm")
+            role = request.form.get("newRole")
+            if "/initApp" not in request.referrer: 
+                if role == 'admin':
+                    role =1
+                else:
+                    role = 0
+                if passWord == passWordConfirm:
+                    user.newUser(userName,passWord,role)
+                    log.info(f"New User Created: {userName}")
+                    return redirect(url_for("pages.admin",tab="security"))
+                else:
+                    log.error("Password Validation Failed for New User Creation")
+                    return redirect(url_for("pages.admin",tab="security",))
+            else:
+                userName=request.form.get("newUsername")
+                passWord=request.form.get("newPassword")
+                role = 1
+                user.newUser(userName,passWord,role)
+                log.info(f"Initial User Created: {userName}")
+                return {"message": "Success"}
+        else:
+            log.error("Unauthorized User Creation Attempt")
+            return {"message": "Unauthorized"}, 401
+    except Exception as e:
+        log.error(f"Error creating user: {e}")
+        return {"message": f"An Error has occured: {e}"}, 500
+
 @bp.route("/init")
 def initdb():
-    #info=OMADA.initDBinfo()
-    ssids=db.session.query(SSID)
-    for i in ssids:
-        genQRCode(i)
-    return render_template("pages/login.html")
+    try:
+        if current_user.is_authenticated or request.referrer.endswith("/initApp"):
+            config=getConfig()
+            if config['apiType']=='unifi':
+                info=UNIFI.initDBinfo()
+            elif config['apiType']=='omada':
+                info = OMADA.initDBinfo()
+            else:
+                log.error(f"APi Type Error: {config['apiType']}")
+                return {"message":"Incorrect ApiType in config"}
+            ssids=db.session.query(SSID)
+            x=0
+            for i in ssids:
+                genQRCode(i)
+                x+=1
+            return {"message": "Success", "details": f'{x} SSIDs Initialized'}
+        else:
+            log.error("Unauthorized DB Initialization Attempt")
+            return {"message": "Unauthorized"}, 401
+    except Exception as e:
+        log.error(e)
+        return {"message": f"An Error has occured: {e}"}, 500
 
 @bp.route("/qr/<name>")
+@login_required
 def getImage(name):
     filePath = Path(f"static/img/{name}.png")
     if filePath.exists():
@@ -122,6 +182,7 @@ def getImage(name):
         abort(404,description="Resource Not Found")
 
 @bp.route("/changepw/<int:id>")
+@login_required
 def changePW(id:int):
     try:
         myconfig = getConfig()
@@ -143,7 +204,7 @@ def changePW(id:int):
                 info=UNIFI.changePW(ssid,pw)
             else:
                 log.error(f"Invalid API Type: {myconfig['apiType']}")
-                return abort(404, f"Error changing password: Invalid API Type {myconfig['apiType']}")    
+                return abort(404, f"Error changing password: Invalid API Type {myconfig['apiType']}")
         if info is True:
             ssid.ssidPW=pw
             db.session.add(ssid)
@@ -159,6 +220,7 @@ def changePW(id:int):
         return abort(500,f"An Error has occured: {e}")
     
 @bp.route("/createCron/<int:id>")
+@login_required
 def AddCronJob(id):
     try:
         rotate=request.args.get("rotateFrequency")
@@ -179,6 +241,7 @@ def AddCronJob(id):
         return f"An Error has occured: {e}"
     
 @bp.route("makeguest/<int:id>")
+@login_required
 def guestSwap(id):
     ssid=SSID.query.get(id)
     ssid.makeGuest()
@@ -200,3 +263,29 @@ def logAction():
 def networkQR(id):
     guest = SSID.query.get(id)
     return render_template("pages/index.html",guest=guest)
+
+@bp.route("/newConfig", methods=['POST'])
+def newConfig():
+    try:
+        if request.referrer.endswith("/initApp"):
+            myConfig = getConfig()
+            newConfig = request.form.to_dict()
+            myConfig["apiType"] = newConfig["api_type"]
+            if myConfig["apiType"] == 'unifi':
+                myConfig["apiUser"]["apiKey"] = newConfig["controllerApiKey"] or None
+            elif myConfig["apiType"] == 'omada':
+                myConfig["apiUser"]["userName"] = newConfig["controllerUsername"] or None
+                myConfig["apiUser"]["passWord"] = newConfig["controllePassword"] or None
+            else:
+                log.error(f'API Type Unknown: {newConfig["api_type"]}')
+            myConfig["controllerIp"]=newConfig["controllerIp"]
+            updateConfig(myConfig)
+            log.info(f"New Config Saved")
+            log.debug(f"New Config Saved {newConfig}")  
+            return {"message":"Success", "details": "Configuration Saved"}
+        else:
+            log.error("Unauthorized Config Creation Attempt")
+            return {"message": "Unauthorized"}, 401
+    except Exception as e:
+        log.error(e)
+        return {"message": "Error","details":f"{e}"}, 500

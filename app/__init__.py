@@ -45,7 +45,7 @@ def create_app():
         with app.app_context():
             db.create_all()
             print("Database Created!")
-            print(user.newUser('root', 'admin', True ))
+            #print(user.newUser('root', 'admin', True ))
     else :
         print("Database exisits....")
         migrate.init_app(app,db)

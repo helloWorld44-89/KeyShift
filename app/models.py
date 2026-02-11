@@ -37,12 +37,12 @@ class SSID(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     ssidName=db.Column(db.Text, nullable=False)
     ssidPW=db.Column(db.Text)
-    #lastChanged=db.Column(db.DateTime, default=None)
+    lastChanged=db.Column(db.DateTime, default=None)
     siteID=db.Column(db.Text)
     wlanGroupID=db.Column(db.Text,default=None)
     ssidID=db.Column(db.Text)
     status=db.Column(db.Boolean, default=True)
-    #hidden=db.Column(db.Boolean, default=False)
+    hidden=db.Column(db.Boolean, default=False)
     pwRotate=db.Column(db.Boolean, default=False)
     rotateFrequency=db.Column(db.Text, default=None)
     qrCode=db.Column(db.Boolean, default=False)
@@ -76,6 +76,11 @@ class SSID(db.Model):
     def makeGuest(self):
         try:
             guestSSID = SSID.query.filter_by(isGuest=True).first()
+            if guestSSID is None:
+                self.isGuest = True
+                db.session.commit()
+                log.info(f"{self.ssidName} is now the guest SSID.")
+                return f"{self.ssidName} is now the guest SSID."
             if guestSSID.id == self.id:
                 log.info(f"{self.ssidName} is already the guest SSID.")
                 return f"{self.ssidName} is already the guest SSID."
