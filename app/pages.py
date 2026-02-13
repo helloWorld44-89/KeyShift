@@ -186,7 +186,9 @@ def getImage(name):
 def changePW(id:int):
     try:
         myconfig = getConfig()
+        print(id)
         ssid=SSID.query.get(id)
+        print(ssid)
         pw = request.args.get("pw",'auto')
         if pw != 'auto':
             if myconfig["apiType"] == "omada":
@@ -211,7 +213,7 @@ def changePW(id:int):
             db.session.commit()
             log.info(f"Password changed for {ssid.ssidName}")
             log.debug(f"Password changed for {ssid.ssidName} to {pw}")
-            return {"message":'Success'}
+            return redirect(url_for('pages.admin'))
         else:
             log.error(f"Error changing password for {ssid.ssidName}: {info}")
             return {"message":f"Error changing password: {info}"}
@@ -223,18 +225,27 @@ def changePW(id:int):
 @login_required
 def AddCronJob(id):
     try:
+        
         rotate=request.args.get("rotateFrequency")
         ssid=SSID.query.get(id)
+        
         if rotate == "None":
             deleteCron(ssid)
             ssid.addRotation(None)
             log.info(f"Cron job deleted for SSID: {ssid.ssidName}")
             return redirect(request.referrer)
         else:
-            ssid.addRotation(rotate)
-            cron =getCrontab(ssid.ssidName)
-            createCron(ssid)
-            log.info(f"Cron job created for SSID: {ssid.ssidName} with schedule {rotate}")
+            
+            print(ssid.rotateFrequency)
+            
+            if ssid.rotateFrequency is not None:
+                ssid.addRotation(rotate)
+                cronChange(ssid)
+                log.info(f'Cron Time for SSID: {ssid.ssidName} updated to {rotate}.')
+            else:
+                ssid.addRotation(rotate)
+                createCron(ssid)
+                log.info(f"Cron job created for SSID: {ssid.ssidName} with schedule {rotate}")
         return redirect(request.referrer)
     except Exception as e:
         log.error(f"Create Cron Error: {e}")

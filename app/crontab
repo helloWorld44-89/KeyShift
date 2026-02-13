@@ -1,4 +1,3 @@
 # Job for changing guest password on rotation
 # @daily root /usr/local/bin/python3 /app/app/cron.py
-@daily root /usr/bin/python3 /app/app/config/rotatePW.py 4 # test
-@weekly root /usr/bin/python3 /app/app/config/rotatePW.py 1 # ThouShaltNotSteal
+@monthly root cd /app/app && /usr/bin/python3 -m app.ssid 1 # ThouShaltNotSteal

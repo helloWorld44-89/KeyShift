@@ -30,6 +30,6 @@ EXPOSE 5000
 ENV FLASK_APP=/app/app.py
 # Run the Flask application
 CMD ["/bin/bash","app/startUp.sh"]
-#CMD ["ls","-a"]
+
 
 ###docker build -t keyshift:latest .

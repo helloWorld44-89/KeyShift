@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="static/img/KeyShift.png" type="image/png" />
+
+    <title>KeyShift</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+          <img src="{{ url_for("static",filename ="img/KeyShift.png") }}" class="img-fluid" style="max-width: 50px;"/> KeyShift Admin</a>
+      </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+      <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-2">
+          <div class="list-group">
+            <a
+              class="list-group-item list-group-item-action {{ 'active' if tab== 'home'}}"
+              data-bs-toggle="tab"
+              href="#home"
+              aria-selected=
+              {{ "true" if tab=='home' else 'false' }}
+              >Home</a
+            >
+            <a
+              class="list-group-item list-group-item-action {{ 'active' if tab== 'configuration'}}"
+              data-bs-toggle="tab"
+              href="#configuration"
+              aria-selected=
+              {{ "true" if tab=='configuration' else 'false' }}
+              >Configuration</a
+            >
+            <a
+              class="list-group-item list-group-item-action {{ 'active' if tab== 'advanced'}}"
+              data-bs-toggle="tab"
+              href="#advanced"
+              aria-selected=
+              {{ "true" if tab=='advanced' else 'false' }}
+              >Advanced</a
+            >
+            <a
+              class="list-group-item list-group-item-action  {{ 'active' if tab== 'security'}}"
+              data-bs-toggle="tab"
+              href="#security"
+              aria-selected=
+              {{ "true" if tab=='security' else 'false' }}
+              >Security</a
+            >
+            <a
+              class="list-group-item list-group-item-action  {{ 'active' if tab== 'settings'}}"
+              data-bs-toggle="tab"
+              href="#settings"
+              aria-selected=
+              {{ "true" if tab=='settings' else 'false' }}
+              >Settings</a
+            >
+            <a
+              class="list-group-item list-group-item-action bg-secondary text-light"
+              href="/logout"
+              >Logout</a
+            >
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10">
+          <div class="tab-content">
+            <!-- HOME TAB -->
+            <div class="tab-pane fade {{ 'show active' if tab == 'home'  }}" id="home">
+              <h3>Current WiFi Status</h3>
+              <div class="card p-3 mt-3">
+                <h5>Current Guest Password:</h5>
+                <div class="input-group mb-3 w-25">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="passWord"
+                    placeholder="Wifi Password"
+                    value="{{
+                  guest.ssidPW if guest else 'No Guest SSID Found'}}"
+                    disabled
+                  />
+                </div>
+
+                <h5 class="mt-4">SSID Information</h5>
+                <table class="table table-striped mt-2">
+                  <thead>
+                    <tr>
+                      <th>SSID</th>
+                      <th>Guest?</th>
+                      <th>Rotate?</th>
+                      <th>Actions
+                        <button class="btn btn-sm btn-secondary ms-2" id="editSsids">Edit SSIDs</button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for i in ssids %}
+                    <tr>
+                      <td class="d-none">i.id</td>
+                      <td>{{ i.ssidName }}</td>
+                      <td><span class="{{ "badge bg-success" if i.isGuest == True else "badge bg-danger" }}">Guest</span>
+                      </td>
+                      <td><span class="{{ "badge bg-success" if i.pwRotate ==True else "badge bg-danger"}}">{{ i.rotateFrequency }}</span></td>
+                      <td> <div class="btn-group">
+                        <button class="btn btn-info ssidEdit disabled"><a class="btn "href="/makeguest/{{ i.id }}" {{ "disabled" if i.isGuest == True }}>Make Guest</a></button>
+                        <button class="btn btn-info dropdown-toggle ssidEdit disabled" type="button" data-bs-toggle="dropdown" aria-expanded="false">Rotate PW</button>
+                        <ul class="dropdown-menu">
+                          <li ><a href="/createCron/{{ i.id }}?rotateFrequency=None" class="dropdown-item {{ "disabled" if i.pwRotate == False }}" >None</a></li>
+                          <li ><a href="/createCron/{{ i.id }}?rotateFrequency=@daily" class="dropdown-item {{ "disabled" if i.rotateFrequency == '@daily' }}">Daily</a></li>
+                          <li ><a href="/createCron/{{ i.id }}?rotateFrequency=@weekly" class="dropdown-item {{ "disabled" if i.rotateFrequency == '@weekly' }}">Weekly</a></li>
+                          <li ><a href="/createCron/{{ i.id }}?rotateFrequency=@monthly" class="dropdown-item {{ "disabled" if i.rotateFrequency == '@monthly' }}">Monthly</a></li>
+                        </ul>
+                        <button class="btn btn-info  ssidEdit disabled"><a class="btn" href="/changepw/{{ i.id }}"> Change PW</a></button>
+                      </div></td>
+                      
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- CONFIGURATION TAB -->
+            <div class="tab-pane fade {{ ' show active' if tab == 'configuration'  }}" id="configuration">
+              <h3>Configuration</h3>
+              <button class="btn btn-info rounded-4" id="enableEdit"> Edit Config</button>
+              <form action="/updateConfig" method="POST" class="mt-3" id = "configForm">
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label">API Type</label>
+                    <select class="form-select" name="api_type" id="apiType" disabled>
+                      <option value="unifi" {% if config.apiType == "unifi" %}selected{% endif %}>UNIFI</option>
+                      <option value="omada" {% if config.apiType == "omada" %}selected{% endif %}>OMADA</option>                      
+                    </select>
+                  </div>
+                  <input type="hidden" name="tab" value="configuration"/>
+                  <div class="col-md-4"id="userName">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" name="username" id=userNameInput value="{{ config.apiUser.userName }}" disabled />
+                  </div>
+
+                  <div class="col-md-4" id="configPassWord">
+                    <label class="form-label">Password</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="password"
+                      value="{{ config.apiUser.passWord }}"
+                      id="pwInput"
+                      disabled
+                    />
+                  </div>
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col-md-4" id="apiKey">
+                    <label class="form-label">API Key</label>
+                    <input type="text" class="form-control" name="apiKey" id="apiKeyInput" value="{{ config.apiUser.apiKey }}" disabled/>
+                  </div>
+
+                  <div class="col-md-4">
+                    <label class="form-label">Controller IP / Hostname</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="controller_host"
+                      value="{{ config.controllerIp }}"
+                      id="controllerInput"
+                      disabled
+                    />
+                  </div>
+                  
+                    <button type="submit" class="btn btn-primary w-50 mt-4 rounded-4 d-none" id="submitConfig">
+                      Save Configuration
+                    </button>
+                  </div>
+              </form>
+            </div>
+
+            <!-- Advanced options Tab  -->
+            <div class="tab-pane fade {{ 'show active' if tab == 'advanced'  }}" id="advanced">
+              <h3>Advanced Settings</h3>
+              <!-- Existing Logging Level Form -->
+              <form class="mt-3">
+                <label class="form-label">Logging Level</label>
+                <select class="form-select w-25">
+                  <option>INFO</option>
+                  <option>DEBUG</option>
+                </select>
+                <button class="btn btn-secondary mt-3">Save</button>
+              </form>
+              <!-- New Crontab Job Edit Form -->
+              <form class="mt-4" action="/manualCron/{{ guest.id }}" method="POST">
+                <h3>Manually Change the CronJob Schedule for Your Guest Network</h3>
+                <label class="form-label">Current Crontab Schedule</label>
+                <input
+                  type="text"
+                  class="form-control w-50"
+                  placeholder="e.g. */5 * * * *,@daily,@weekly,@monthly"
+                  id="schedule"
+                  name="current_schedule"
+                  value="{{ schedule }}"
+                  disabled
+                />
+                <input type="hidden" name="tab" value="advanced"/>
+                <label class="form-label">Change Crontab Schedule</label>
+                <input
+                  type="text"
+                  class="form-control w-50"
+                  placeholder="e.g. */5 * * * *,@daily,@weekly,@monthly"
+                  id="schedule"
+                  name="schedule"
+                  
+                />
+                <label class="form-label mt-3">Full CronJob</label>
+                <input
+                  type="text"
+                  class="form-control w-75"
+                  placeholder="/usr/bin/my-script.sh"
+                  value="{{ cron }}"
+                  id="cronDisplay"
+                  disabled
+                />
+                <button class="btn btn-secondary mt-3"type="submit">Update Job</button>
+              </form>
+            </div>
+
+           <!-- SECURITY TAB -->
+            <div class="tab-pane fade {{ 'show active' if tab == 'security' }}" id="security">
+              <h3>User Management</h3>
+
+              <!-- Add User Button -->
+              <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                Add User
+              </button>
+
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for i in users %}
+                  <tr>
+                    <td class="d-none" value="{{ i.id }}" id="userID"></td>
+                    <td>{{ i.username }}</td>
+                    <td>{{ 'Admin' if i.admin == True else 'User'}}</td>
+                    <td>
+                      <button class="btn btn-sm btn-warning editUser" data-bs-toggle="modal" data-bs-target="#editUserModal" >
+                        Edit
+                      </button>
+                      <button class="btn btn-sm btn-danger">Delete</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+              <!-- New USER Modal -->
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content shadow-lg border-0 rounded-4">
+
+                <div class="modal-header border-0">
+                  <h5 class="modal-title fw-bold">Create New User</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body px-4">
+                  <form method="POST" action="/users/add">
+
+                    <div class="form-floating mb-3">
+                      <input type="text" class="form-control" id="newUsername" name="newUsername" placeholder="Username">
+                      <label for="newUsername">Username</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                      <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="Password">
+                      <label for="newPassword">Password</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                      <input type="password" class="form-control" id="newPasswordConfirm" name="newPasswordConfirm" placeholder="Confirm Password">
+                      <label for="newPasswordConfirm">Confirm Password</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                      <select class="form-select" id="newRole" name="newRole">
+                        <option value="user">User</option>
+                        <option value="admin">Administrator</option>
+                      </select>
+                      <label for="newRole">Role</label>
+                    </div>
+
+                    <div class="text-center mt-4">
+                      <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill">
+                        Create User
+                      </button>
+                    </div>
+
+                  </form>
+                </div>
+
+                <div class="modal-footer border-0">
+                  <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                    Close
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+            <!-- Edit USer Modal -->
+            <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content shadow-lg border-0 rounded-4">
+
+                  <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+
+                  <div class="modal-body px-4">
+                    <form method="POST" id="editUserForm">
+
+                      <input type="hidden" id="editUserId" name="editUserId">
+
+                      <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="editUsername" name="editUsername" placeholder="Username">
+                        <label for="editUsername">Username</label>
+                      </div>
+
+                      <div class="form-floating mb-3">
+                        <select class="form-select" id="editRole" name="editRole">
+                          <option value="user">User</option>
+                          <option value="admin">Administrator</option>
+                        </select>
+                        <label for="editRole">Role</label>
+                      </div>
+
+                      <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="editPassword" name="editPassword" placeholder="New Password">
+                        <label for="editPassword">New Password (optional)</label>
+                      </div>
+
+                      <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="editPasswordConfirm" name="editPasswordConfirm" placeholder="Confirm Password">
+                        <label for="editPasswordConfirm">Confirm Password</label>
+                      </div>
+
+                      <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill">
+                          Save Changes
+                        </button>
+                      </div>
+
+                    </form>
+                  </div>
+
+                  <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                      Close
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+
+            <!-- SETTINGS TAB -->
+            <div class="tab-pane fade {{ 'show active' if tab == 'settings'  }}" id="settings">
+              <h3>Theme Settings</h3>
+              <form class="mt-3">
+                <label class="form-label">Theme</label>
+                <select class="form-select w-25">
+                  <option>Light</option>
+                  <option>Dark</option>
+                  <option>Auto</option>
+                </select>
+
+                <button class="btn btn-primary mt-3">Apply Theme</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="static/js/admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

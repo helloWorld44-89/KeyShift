@@ -9,7 +9,7 @@ log = logging.getLogger("api.unifi")
 myConfig= config.getConfig()
 session=requests.Session()
 class UNIFI:
-    def changePW(newPw,ssid:s):
+    def changePW(ssid:s, newPw):
         try:
             gwIP = myConfig['controllerIp']
             apiKey=myConfig["apiUser"]["apiKey"]
@@ -31,7 +31,7 @@ class UNIFI:
             if newResponse.status_code == 200:
                 log.info(f"Wi-Fi password changed to {newPw}")
                 log.debug(f"Wi-Fi PW Changed: {dict} ")
-                return "Success: Wi-Fi password updated."
+                return True
             else:
                 log.info(f"Error: {newResponse.status_code} - {newResponse.text} ")
                 log.debug(f"Error: {newResponse.status_code} - {newResponse.text}, info sent: {dict}")

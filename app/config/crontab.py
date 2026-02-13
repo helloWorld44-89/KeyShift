@@ -3,24 +3,27 @@ import logging
 from ..models import SSID
 
 log= logging.getLogger("config.crontab")
-#filePath = '/etc/cron.d/qrCron'
-filePath = './app/crontab'
+filePath = '/etc/cron.d/qrCron'
+#filePath = './app/crontab'
 def cronChange(ssid:SSID):
-    with CronTab(tabfile=filePath) as cron:
-        # Look for an existing job using a specific comment
-        jobComment = ssid.ssidName
-        existingJobs = cron.find_comment(jobComment)
-        if existingJobs:
-            # Edit the existing job        
-            job = list(existingJobs)[0] # Get the first job found
-            job.setall(ssid.rotateFrequency)
-            log.info(f"Modified existing job: {job}")
-            log.debug(f" Exisiting job {job} | {ssid}")
-            return f"Modified existing job: {job}"
-        else:
-            log.error(f"job not found: {existingJobs}")
-            return f"job not found: {existingJobs}"
-        
+    try:
+        with CronTab(tabfile=filePath) as cron:
+            # Look for an existing job using a specific comment
+            jobComment = ssid.ssidName
+            existingJobs = list(cron.find_comment(jobComment))
+            if existingJobs:
+                # Edit the existing job        
+                job = existingJobs[0] # Get the first job found
+                job.setall(ssid.rotateFrequency)
+                log.info(f"Modified existing job: {job}")
+                log.debug(f" Exisiting job {job} | {ssid}")
+                return f"Modified existing job: {job}"
+            else:
+                log.error(f"job not found: {existingJobs}")
+                return f"job not found: {existingJobs}"
+    except Exception as e:
+        log.error({e} | {existingJobs})
+            
 def getCrontab(comment=None):
     try:
         with CronTab(tabfile=filePath) as cron:
@@ -40,7 +43,7 @@ def manualCron(time,name):
     with CronTab(tabfile=filePath) as cron:
         # Look for an existing job using a specific comment
         jobComment = name
-        existingJobs = cron.find_comment(jobComment)
+        existingJobs = list(cron.find_comment(jobComment))
         if existingJobs:
             # Edit the existing job        
             job = list(existingJobs)[0] # Get the first job found
@@ -55,7 +58,7 @@ def manualCron(time,name):
 def createCron(ssid:SSID):
     try:
         with CronTab(tabfile=filePath) as cron:
-            job = cron.new(command=f'root /usr/bin/python3 /app/app/config/rotatePW.py {ssid.id}', comment=ssid.ssidName)
+            job = cron.new(command=f'root cd /app/app && /usr/bin/python3 -m app.ssid {ssid.id}', comment=ssid.ssidName)
             job.setall(ssid.rotateFrequency)
             cron.write()
             log.info(f"Created new cron job: {job}")
