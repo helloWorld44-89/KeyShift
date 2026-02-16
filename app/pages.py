@@ -212,7 +212,7 @@ def changePW(id:int):
             db.session.add(ssid)
             db.session.commit()
             log.info(f"Password changed for {ssid.ssidName}")
-            log.debug(f"Password changed for {ssid.ssidName} to {pw}")
+            log.debug(f"Password changed for {ssid.ssidName}")
             return redirect(url_for('pages.admin'))
         else:
             log.error(f"Error changing password for {ssid.ssidName}: {info}")

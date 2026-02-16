@@ -22,7 +22,7 @@ def genPW(length=40):
                 any(c.isdigit() for c in password) and
                 any(c in string.punctuation for c in password)):
                 break # Exit the loop if all criteria are met
-        log.info(f"New PW Generated: {password}")       
+        log.info("Wi-Fi password changed successfully")      
         return password
     except Exception as e:
         log.info(f"Error: {e}")  

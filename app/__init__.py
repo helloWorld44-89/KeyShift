@@ -3,6 +3,11 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from os import path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 db=SQLAlchemy()
 migrate=Migrate()
@@ -11,9 +16,14 @@ migrate=Migrate()
 def create_app():
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = 'SECRETKEY'
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+    if not app.config['SECRET_KEY']:
+        raise ValueError("No SECRET_KEY set in environment variables")
+
+
+    
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///KeyShift.db'
-    app.secret_key = 'TEST KEY'
+    
 
     db.init_app(app)
 

@@ -6,7 +6,5 @@ services:
     volumes:
       - .:/app
 
-    environment:
-      - FLASK_DEBUG=true
-      - FLASK_APP=app.py
-      - TZ=America/Chicago
+    env_file:
+      - .env

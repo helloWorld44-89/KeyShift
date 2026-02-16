@@ -86,7 +86,7 @@ def getConfig():
     return config
 ```
 
-## 4. Remove Password Logging
+## 4. Remove Password Logging Done
 
 ### In app/utilities/genPW.py (line 25):
 ```python

@@ -29,7 +29,7 @@ class UNIFI:
                 'X-API-KEY': f'{apiKey}'}
             newResponse = session.put(update_url, headers=headers, json=dict, verify=False)
             if newResponse.status_code == 200:
-                log.info(f"Wi-Fi password changed to {newPw}")
+                log.info("Wi-Fi password changed successfully")
                 log.debug(f"Wi-Fi PW Changed: {dict} ")
                 return True
             else:

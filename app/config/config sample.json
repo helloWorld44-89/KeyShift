@@ -5,9 +5,9 @@
     "apikey": "key123456789"
   },
   "controllerIp": "192.168.1.1",
-  "apiType": "UNIFI",
+  "apiType": "unifi",
   "wifiInfo": {
-    "SSID": "ThouShaltNotSteal",
+    "SSID": "rotateMe",
     "ID": "123465789",
     "password": "funTimes"
   },
