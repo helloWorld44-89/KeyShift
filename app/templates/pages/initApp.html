@@ -1,117 +1,105 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <title>Login - KeyShift</title>
+    <title>Setup - KeyShift</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="static/img/KeyShift.png" type="image/png" />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link href="static/css/admin.css" rel="stylesheet" />
+    <link href="static/css/initApp.css" rel="stylesheet" />
   </head>
+  <body>
 
-  <body class="bg-light d-flex align-items-center" style="height: 100vh">
-    <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-md-4">
-          <div class="card shadow">
-            <div class="card-body p-4">
-              <h3 class="text-center mb-5" id="title">Create Admin User</h3>
-              <div class="mx-auto text-center d-flex justify-content-center align-items-center d-none"id="dbSpinner" style="min-height: 200px;">
-              <span class="spinner-border spinner-border-xl"  role="status" aria-hidden="true"></span>
-              </div>
-              <form class="mt-2" id="newUserForm">
-                <div class="mb-3">
-                  <label class="form-label">Username</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="username"
-                    name="newUsername"
-                  />
-                </div>
+    <button class="corner-theme-toggle" id="themeToggle" title="Toggle Dark Mode">
+      <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+    </button>
 
-                <div class="mb-3">
-                  <label class="form-label">Password</label>
-                  <input
-                    type="password"
-                    class="form-control"
-                    id="password"
-                    name="newPassword"
-                  />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Confirm Password</label>
-                  <input
-                    type="password"
-                    class="form-control"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                  />
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">Create New User</button>
-              </form>
-              <form class="d-none" id="configForm">
-                <div class="mb-3">
-                  <label class="form-label">Wireless Controller Type</label>
-                  <select class="form-select" name="api_type" id="apiType">
-                      <option value="" selected disabled>Select Controller Type</option>
-                      <option value="unifi">UNIFI</option>
-                      <option value="omada">OMADA</option>                      
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">Controller IP Address</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="controllerIpInput"
-                    name="controllerIp"
-                  />
-                </div>
-                <div class="mb-3 d-none" id="controllerApiKey">
-                  <label class="form-label">Controller API Key</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="controllerApiKeyInput"
-                    name="controllerApiKey"
-                  />
-                </div>
-                <div class="mb-3 d-none" id="controllerUsername">
-                  <label class="form-label">Controller Username</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="controllerUsernameInput"
-                    name="controllerUsername"
-                  />
-                </div>
-                <div class="mb-3 d-none" id="controllerPassword">
-                  <label class="form-label">Controller Password</label>
-                  <input
-                    type="password"
-                    class="form-control"
-                    id="controllerPasswordInput"
-                    name="controllePassword"
-                  />
-                </div>
-                <button class="btn btn-primary w-100" id="saveConfig">
-                  <span class="spinner-border spinner-border-sm me-2 d-none" id="configSpinner" role="status" aria-hidden="true"></span>
-                  <span id="configBtnText">Save Configuration</span>
-                </button>              
-              </form>
-            </div>
-            
+    <div class="setup-wrapper">
+      <div class="setup-card">
+        <div class="setup-header">
+          <img src="static/img/KeyShift.png" alt="KeyShift Logo" />
+          <div class="setup-header-text">
+            <h3>KeyShift Setup</h3>
+            <p>Initial application configuration</p>
           </div>
         </div>
+
+        <div class="step-indicator" id="stepIndicator">
+          <div class="step-dot active" id="step1dot">1</div>
+          <div class="step-line" id="stepLine"></div>
+          <div class="step-dot" id="step2dot">2</div>
+        </div>
+        <div class="step-labels">
+          <span class="step-label active" id="step1label">Admin User</span>
+          <span class="step-label" id="step2label">Controller</span>
+        </div>
+
+        <div class="setup-body">
+
+          <div class="spinner-overlay d-none" id="dbSpinner">
+            <div class="spinner-border spinner-border-xl" role="status" aria-hidden="true"></div>
+            <span>Initializing database&hellip;</span>
+          </div>
+
+          <form id="newUserForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="mb-3">
+              <label class="form-label">Username</label>
+              <input type="text" class="form-control form-control-modern" id="username" name="newUsername" placeholder="Choose a username" autocomplete="username" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Password</label>
+              <input type="password" class="form-control form-control-modern" id="password" name="newPassword" placeholder="Create a strong password" autocomplete="new-password" />
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Confirm Password</label>
+              <input type="password" class="form-control form-control-modern" id="confirmPassword" name="confirmPassword" placeholder="Repeat your password" autocomplete="new-password" />
+            </div>
+            <button type="submit" class="btn btn-setup">
+              <i class="bi bi-person-check me-2"></i>Create Admin User
+            </button>
+          </form>
+
+          <form class="d-none" id="configForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="mb-3">
+              <label class="form-label">Wireless Controller Type</label>
+              <select class="form-select form-control-modern form-select-modern" name="api_type" id="apiType">
+                <option value="" selected disabled>Select Controller Type</option>
+                <option value="unifi">UNIFI</option>
+                <option value="omada">OMADA</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Controller IP Address</label>
+              <input type="text" class="form-control form-control-modern" id="controllerIpInput" name="controllerIp" placeholder="e.g. 192.168.1.1" />
+            </div>
+            <div class="mb-3 d-none" id="controllerApiKey">
+              <label class="form-label">Controller API Key</label>
+              <input type="text" class="form-control form-control-modern" id="controllerApiKeyInput" name="controllerApiKey" placeholder="Paste your API key" />
+            </div>
+            <div class="mb-3 d-none" id="controllerUsername">
+              <label class="form-label">Controller Username</label>
+              <input type="text" class="form-control form-control-modern" id="controllerUsernameInput" name="controllerUsername" placeholder="Controller username" />
+            </div>
+            <div class="mb-4 d-none" id="controllerPassword">
+              <label class="form-label">Controller Password</label>
+              <input type="password" class="form-control form-control-modern" id="controllerPasswordInput" name="controllePassword" placeholder="Controller password" />
+            </div>
+            <button type="submit" class="btn btn-setup" id="saveConfig">
+              <span class="spinner-border spinner-border-sm me-2 d-none" id="configSpinner" role="status" aria-hidden="true"></span>
+              <i class="bi bi-floppy me-2" id="configBtnIcon"></i>
+              <span id="configBtnText">Save Configuration</span>
+            </button>
+          </form>
+
+        </div>
       </div>
-      
     </div>
-     <script src="/static/js/initApp.js"></script>
+
+    <script src="/static/js/initApp.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

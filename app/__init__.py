@@ -2,15 +2,20 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from os import path
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-
 db=SQLAlchemy()
 migrate=Migrate()
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["200 per day", "20 per hour"]
+)
 
 
 def create_app():
@@ -26,6 +31,11 @@ def create_app():
     
 
     db.init_app(app)
+    limiter.init_app(app)
+    from flask_wtf.csrf import CSRFProtect
+
+    csrf = CSRFProtect()
+    csrf.init_app(app)
 
     from logging.config import dictConfig
     from app.logging_config import LOGGING_CONFIG
@@ -35,11 +45,13 @@ def create_app():
 
     from .pages import bp
     app.register_blueprint(bp, url_prefix = '/')
+    from app.routes import register_blueprints
+    register_blueprints(app)
 
 
     login_manager=LoginManager()
     login_manager.login_message_category = "info"
-    login_manager.login_view='pages.login'
+    login_manager.login_view='auth.login'
     login_manager.init_app(app)
 
     from .models import user

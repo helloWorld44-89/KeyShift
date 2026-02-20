@@ -21,7 +21,7 @@ COPY app/crontab /etc/cron.d/qrCron
 RUN chmod 644 /etc/cron.d/qrCron
 
 COPY app/startUp.sh /app/
-RUN chmod +x /app/app/startUp.sh 
+RUN chmod +x /app/startUp.sh 
 
 # Expose the port Flask runs on
 EXPOSE 5000

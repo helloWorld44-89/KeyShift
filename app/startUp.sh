@@ -18,4 +18,4 @@ exec gunicorn \
     --access-logfile - \
     --error-logfile - \
     --log-level info \
-    app:app
+    wsgi:flask_app

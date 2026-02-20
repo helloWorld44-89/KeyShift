@@ -2,7 +2,6 @@ from app import create_app
 import logging
 
 log = logging.getLogger(__name__)
-
 flask_app = create_app()
 
 log.info("KeyShift starting up...")
