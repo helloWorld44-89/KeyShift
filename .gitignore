@@ -38,8 +38,7 @@ instance/
 *.pem
 
 # Configuration Files with Secrets
-app/config/config.json
-config.json
+
 
 # Database
 *.db
