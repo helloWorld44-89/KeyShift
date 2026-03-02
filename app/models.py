@@ -1,5 +1,6 @@
 from flask_login import UserMixin
 from . import db
+from sqlalchemy import delete
 from flask_bcrypt import bcrypt 
 import secrets
 import logging 
@@ -112,4 +113,14 @@ class SSID(db.Model):
         except Exception as e:
             log.error(f"addRotation Error : {e}")
             return f'An Error has occured: {e}'
-           
+    
+    def removeAllSSIDS()->bool:
+        try:    
+            if len(SSID.query.all())>0:
+                db.session.execute(delete(SSID).where(SSID.id >0))
+                db.session.commit()
+                log.info('SSIDs deleted from database.')
+            return True
+        except Exception as e:
+            log.error(e)
+            return False

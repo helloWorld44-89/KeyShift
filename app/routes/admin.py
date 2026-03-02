@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app.models import user, SSID
 from app.config.config import getConfig, updateConfig
 from app.config.crontab import getCrontab, manualCron
+from app.api import unifi,omada
 from app import db
 import logging
 
@@ -112,3 +113,23 @@ def guestSwap(id):
     ssid=SSID.query.get(id)
     ssid.makeGuest()
     return redirect(request.referrer)
+
+@bp.route("/rescanSSIDs")
+@login_required
+def rescanSSIDs():
+    try:
+        log.info(f"User: {current_user.id} has requested to rescan for SSIDs")
+        log.debug("Deleting SSIDs")
+        SSID.removeAllSSIDS()
+        config= getConfig()
+        if config["apiType"] == 'unifi':
+            unifi.UNIFI.initDBinfo()
+        elif config['apiType'] =='omada':
+            omada.OMADA.initDBinfo()
+        else:
+            raise Exception(f'Wrong API Type: {config["apiType"]}')
+        return redirect(request.referrer)
+    except Exception as e:
+        log.error(f"Error creating user: {e}")
+        return {"message": f"An Error has occured: {e}"}, 500
+       

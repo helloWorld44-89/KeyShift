@@ -12,7 +12,6 @@ log = logging.getLogger(__name__)
 @bp.route("/login", methods=["GET", "POST"])
 @limiter.limit("5 per minute")
 def login():
-    print(len(user.query.all()))
     if len(user.query.all()) < 1:
         log.info("No users found, redirecting to initApp")
         return redirect(url_for("setup.initApp"))
