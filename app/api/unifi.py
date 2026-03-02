@@ -98,7 +98,7 @@ class UNIFI:
             log.info(f"UNIFI get SSIDs Error: {e}")
             return f"An Error has occured: {e}"
 
-    def initDBinfo():
+    def initDBinfo() -> False:
         try:
             siteIDs=UNIFI.getSiteIDs()
             wlans=UNIFI.getWifiID(siteIDs)
@@ -111,7 +111,7 @@ class UNIFI:
                 else:
                     log.info(f"SSID {ssid.ssidName} already exists in DataBase")
             db.session.commit()
-            return ssidList
+            return True
         except Exception as e:
             log.info(f"UNIFI initDBinfo Error: {e}")
-            return f"An Error has occured: {e}"
+            return False

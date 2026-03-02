@@ -130,7 +130,7 @@ class OMADA:
             return f"An Error has occured: {e}"
 
 
-    def initDBinfo():
+    def initDBinfo() -> bool:
         try:
             token=OMADA.login()
             siteID=OMADA.getSites(token)
@@ -139,8 +139,9 @@ class OMADA:
             for i in ssids:
                 db.session.add(i)
             db.session.commit()
-            return f"{ssids} added to DataBase"
+            log.info(f"{ssids} added to DataBase")
+            return True
         except Exception as e:
             log.info(f"omada initDb Error: {e}")
-            return f"An Error has occured: {e}"
+            return False
 

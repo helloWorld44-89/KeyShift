@@ -120,9 +120,12 @@ function submitConfig() {
             .then((response) => response.json())
             .then((data) => {
               if (data.message == "Success") {
+                alert("Database Initialization Success: "+ data.details)
                 window.location.href = "/admin";
               } else {
                 alert("Error during database initialization: " + data.details);
+                form.classList.remove("d-none");
+                dbSpinner.classList.add("d-none");
               }
             })
             .catch((error) => {

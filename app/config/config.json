@@ -1,17 +1,18 @@
 {
-  "apiUser": {
-    "userName": "api",
-    "passWord": "superSecurePassowrd!",
-    "apikey": "key123456789"
-  },
-  "controllerIp": "1.1.1.1",
-  "apiType": "unifi",
-  "wifiInfo": {
-    "SSID": "rotateMe",
-    "ID": "123465789",
-    "password": "funTimes"
-  },
-  "logging": {
-    "level": "info"
-  }
+    "apiUser": {
+        "userName": "api",
+        "passWord": "superSecurePassowrd!",
+        "apikey": "key123456789",
+        "apiKey": "JbcZXUU-WrNj2XTUBF3mAqNJR2vaF6gl"
+    },
+    "controllerIp": "192.168.5.1",
+    "apiType": "unifi",
+    "wifiInfo": {
+        "SSID": "rotateMe",
+        "ID": "123465789",
+        "password": "funTimes"
+    },
+    "logging": {
+        "level": "info"
+    }
 }

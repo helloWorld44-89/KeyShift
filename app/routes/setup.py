@@ -34,12 +34,16 @@ def initdb():
             else:
                 log.error(f"APi Type Error: {config['apiType']}")
                 return {"message":"Incorrect ApiType in config"}
-            ssids=db.session.query(SSID)
-            x=0
-            for i in ssids:
-                genQRCode(i)
-                x+=1
-            return {"message": "Success", "details": f'{x} SSIDs Initialized'}
+            if info:
+                ssids=db.session.query(SSID)
+                x=0
+                for i in ssids:
+                    genQRCode(i)
+                    x+=1
+                return {"message": "Success", "details": f'{x} SSIDs Initialized'}
+            else:
+                log.error(f"initDb returned {info}")
+                return {"message":"Failed", "details":"Initializing the Database failed. Please Try Again"}
         else:
             log.error("Unauthorized DB Initialization Attempt")
             return {"message": "Unauthorized"}, 401
@@ -53,6 +57,7 @@ def newConfig():
         if request.referrer.endswith("/initApp") and session.get('init_mode'):
             myConfig = getConfig()
             newConfig = request.form.to_dict()
+            print(newConfig)
             myConfig["apiType"] = newConfig["api_type"]
             if myConfig["apiType"] == 'unifi':
                 myConfig["apiUser"]["apiKey"] = newConfig["controllerApiKey"] or None
