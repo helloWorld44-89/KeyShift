@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment files (never bake secrets into an image)
+.env
+*.env
+*.example
+
+# Local data volumes (these are mounted at runtime anyway)
+data/
+
+# Docs (not needed in the container)
+docs/
+mkdocs.yml
+site/
+
+# Dev/editor files
+.vscode/
+.idea/
+*.md
+README.md
+
+# OS junk
+.DS_Store
+Thumbs.db

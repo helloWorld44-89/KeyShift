@@ -31,8 +31,8 @@ KeyShift is a self-hosted web application that gives you full control over your 
 ### 1. Download and Extract
 
 ```bash
-wget https://github.com/your-repo/keyshift/releases/latest/download/keyshift.zip
-unzip keyshift.zip -d keyshift
+wget https://github.com/helloWorld44-89/KeyShift/raw/refs/heads/main/keyshift.tar.xz
+unzip keyshift.tar.xz -d keyshift
 cd keyshift
 ```
 

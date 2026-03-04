@@ -8,20 +8,20 @@ The recommended way to run KeyShift is with Docker Compose.
 
 ### 1. Download and Extract KeyShift
 
-Download the latest `keyshift.zip` release and unzip it into a directory of your choice:
+Download the latest `keyshift.tar.xz` release and unzip it into a directory of your choice:
 
 ```bash
 # Download the release zip
-wget https://github.com/your-repo/keyshift/releases/latest/download/keyshift.zip
+wget https://github.com/helloWorld44-89/KeyShift/raw/refs/heads/main/keyshift.tar.xz
 
 # Unzip into a 'keyshift' directory
-unzip keyshift.zip -d keyshift
+unzip keyshift.tar.xz -d keyshift
 
 # Move into the project directory
 cd keyshift
 ```
 
-> **Note:** If you don't have `wget`, you can use `curl -L -o keyshift.zip <url>` instead, or download it manually from the releases page.
+> **Note:** If you don't have `wget`, you can use `curl -L -o keyshift.tar.xz https://github.com/helloWorld44-89/KeyShift/raw/refs/heads/main/keyshift.tar.xz` instead, or download it manually from the releases page.
 
 ---
 
