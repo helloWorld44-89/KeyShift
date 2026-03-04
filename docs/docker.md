@@ -96,11 +96,11 @@ cp -r ./data ./data_backup
 
 ## Rebuilding After Updates
 
-When a new version of KeyShift is released, download and unzip the new `keyshift.zip` over your existing directory, then rebuild:
+When a new version of KeyShift is released, stop the container and then pull before starting it back up.
 
 ```bash
 docker compose down
-docker compose build --no-cache
+docker compose pull 
 docker compose up -d
 ```
 
