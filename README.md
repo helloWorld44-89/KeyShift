@@ -73,7 +73,7 @@ On first launch you will be redirected to the setup wizard to configure your con
 services:
   web:
     container_name: keyshift
-    image: keyshift:latest
+    image: ghcr.io/helloworld44-89/keyshift:latest
     ports:
       - "5000:5000"
     volumes:
