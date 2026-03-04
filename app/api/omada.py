@@ -8,10 +8,12 @@ from app import db
 
 log = logging.getLogger("api.omada")
 session = requests.Session()
-myconfig = getConfig()
-baseUrl=f"https://{myconfig["controllerIp"]}:8043/"
+
 class OMADA:
+    @staticmethod 
     def login():
+        myconfig = getConfig()
+        baseUrl=f"https://{myconfig["controllerIp"]}:8043/"
         username = myconfig["apiUser"]["userName"]
         password = myconfig["apiUser"]["passWord"]
         payload = {
@@ -29,9 +31,11 @@ class OMADA:
         else:
             log.error(f"Failed to log in to Omada Controller: {response.text}")
             return "failed"
-        
+    @staticmethod    
     def getSites(token):
         try:
+            myconfig = getConfig()
+            baseUrl=f"https://{myconfig["controllerIp"]}:8043/"
             omadacid = token["result"]["omadacId"]
             payload={
                 'Content-Type': 'application/json',
@@ -46,9 +50,11 @@ class OMADA:
         except Exception as e:
             log.info(f"OMADA get Sites Error: {e}, {token}")
             return f"An Error has occured: {e}"
-
+    @staticmethod 
     def getWlanGroups(token,siteID):
         try:
+            myconfig = getConfig()
+            baseUrl=f"https://{myconfig["controllerIp"]}:8043/"
             omadacid = token["result"]["omadacId"]
             wlanList=[]
             for i in siteID:
@@ -59,14 +65,15 @@ class OMADA:
                 response=session.get(f"{baseUrl}{omadacid}/api/v2/sites/{i}/setting/wlans",headers=payload,verify=False)
                 for x in response.json().get("result", {}).get("data", []):
                     wlanList.append(x.get("id"))
-
             return wlanList
         except Exception as e:
             log.info(f"OMADA get Sites Error: {e}")
             return f"An Error has occured: {e}"
-
+    @staticmethod 
     def getSSIDs(token,siteIDs,wlans):
         try:
+            myconfig = getConfig()
+            baseUrl=f"https://{myconfig["controllerIp"]}:8043/"
             requests.packages.urllib3.disable_warnings()
             omadacid = token["result"]["omadacId"]
             ssidList=[]
@@ -89,9 +96,11 @@ class OMADA:
         except Exception as e:
             log.info(f"OMADA get SSIDs Error: {e}")
             return f"An Error has occured: {e}"
-    
+    @staticmethod 
     def changePW(ssid:s,newPW):
         try:
+            myconfig = getConfig()
+            baseUrl=f"https://{myconfig["controllerIp"]}:8043/"
             requests.packages.urllib3.disable_warnings()
             token=OMADA.login()
             print(token)
@@ -129,7 +138,7 @@ class OMADA:
             log.info(f"OMADA change PW Error: {e}")
             return f"An Error has occured: {e}"
 
-
+    @staticmethod 
     def initDBinfo() -> bool:
         try:
             token=OMADA.login()

@@ -7,7 +7,7 @@ log= logging.getLogger("config.config")
 def getConfig():
     import os 
     BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 
-    CONFIG_PATH = os.path.join(BASE_DIR, "config.json") 
+    CONFIG_PATH = os.path.join(BASE_DIR, "file/config.json") 
     #with open(CONFIG_PATH) as f: data = f.read()
     file_path = CONFIG_PATH
     try:
@@ -27,7 +27,7 @@ def getConfig():
     
 def updatePW(password):
 
-    file_path = 'app/config/config.json' 
+    file_path = 'app/config/file/config.json' 
     try:
         data = getConfig()
         data["wifiInfo"]["password"] = password
@@ -45,7 +45,7 @@ def updatePW(password):
         return f"An unexpected error occurred: {e}"
     
 def updateConfig(newConfig):
-    filename = "app/config/config.json"
+    filename = "app/config/file/config.json"
     try:
         with open(filename, 'w') as json_file:
             json.dump(newConfig, json_file, indent=4)

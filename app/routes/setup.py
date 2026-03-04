@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, session, url_for, redirect
 from flask_login import current_user
 from app.models import user, SSID
+import time
 from app.config.config import getConfig, updateConfig
 from app.api.omada import OMADA
 from app.api.unifi import UNIFI
@@ -27,6 +28,7 @@ def initdb():
     try:
         if current_user.is_authenticated or session.get('init_mode'):
             config=getConfig()
+            time.sleep(3)
             if config['apiType']=='unifi':
                 info=UNIFI.initDBinfo()
             elif config['apiType']=='omada':
@@ -63,7 +65,7 @@ def newConfig():
                 myConfig["apiUser"]["apiKey"] = newConfig["controllerApiKey"] or None
             elif myConfig["apiType"] == 'omada':
                 myConfig["apiUser"]["userName"] = newConfig["controllerUsername"] or None
-                myConfig["apiUser"]["passWord"] = newConfig["controllePassword"] or None
+                myConfig["apiUser"]["passWord"] = newConfig["controllerPassword"] or None
             else:
                 log.error(f'API Type Unknown: {newConfig["api_type"]}')
             myConfig["controllerIp"]=newConfig["controllerIp"]

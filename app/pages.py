@@ -15,8 +15,9 @@ register_blueprints(app)
 @bp.route("/")
 def guest():
     users = user.query.all()
+    print(len(users))
     if len(users) == 0:
-        return redirect(url_for("pages.initApp"))
+        return redirect(url_for("setup.initApp"))
     ssids=db.session.query(SSID)
     guestSSID = ssids.filter_by(isGuest=True).first()
     return render_template("pages/index.html",guest=guestSSID)

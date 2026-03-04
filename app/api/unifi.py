@@ -6,11 +6,13 @@ from app.models import SSID as s
 from app import db
 
 log = logging.getLogger("api.unifi")
-myConfig= config.getConfig()
+
 session=requests.Session()
 class UNIFI:
+    @staticmethod 
     def changePW(ssid:s, newPw):
         try:
+            myConfig= config.getConfig()
             gwIP = myConfig['controllerIp']
             apiKey=myConfig["apiUser"]["apiKey"]
             # Disable SSL warnings for self-signed certificates
@@ -40,9 +42,10 @@ class UNIFI:
             log.info(f"Error: {e}")
             log.debug(f"Error: {e}, JSON{dict}, apiKey: {apiKey}")
             return f"An Error has occured: {e}"
-        
+    @staticmethod     
     def getSiteIDs():
             try:
+                myConfig= config.getConfig()
                 requests.packages.urllib3.disable_warnings()
                 gwIP = myConfig['controllerIp']
                 headers= {
@@ -57,9 +60,10 @@ class UNIFI:
                 log.info(f"UNIFI get Sites Error: {e}")
                 return f"An Error has occured: {e}"
 
-
+    @staticmethod 
     def getWifiID(siteList):
         try:
+            myConfig= config.getConfig()
             requests.packages.urllib3.disable_warnings()
             gwIP = myConfig['controllerIp']
             headers= {
@@ -74,9 +78,10 @@ class UNIFI:
         except Exception as e:
             log.info(f"UNIFI get Wifi IDs Error: {e}")
             return f"An Error has occured: {e}"     
-
+    @staticmethod 
     def getSSIDInfo(siteIDs,wlans):
         try:
+            myConfig= config.getConfig()
             requests.packages.urllib3.disable_warnings()
             gwIP = myConfig['controllerIp']
             headers= {
@@ -97,9 +102,10 @@ class UNIFI:
         except Exception as e:
             log.info(f"UNIFI get SSIDs Error: {e}")
             return f"An Error has occured: {e}"
-
-    def initDBinfo() -> False:
+    @staticmethod 
+    def initDBinfo() -> bool:
         try:
+            myConfig= config.getConfig()
             siteIDs=UNIFI.getSiteIDs()
             wlans=UNIFI.getWifiID(siteIDs)
             ssidList=UNIFI.getSSIDInfo(siteIDs,wlans)

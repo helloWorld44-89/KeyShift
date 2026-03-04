@@ -1,10 +1,12 @@
 services:
   web:
+    container_name: keyshift
     image: keyshift:latest
     ports:
       - "5000:5000"
     volumes:
-      - .:/app
-
+      - ./data/db:/app/instance
+      - ./data/cron:/etc/cron.d
+      - ./data/config:/app/app/config/file
     env_file:
       - .env
