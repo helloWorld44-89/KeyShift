@@ -1435,9 +1435,9 @@
 </code></pre></div>
 <hr />
 <h2 id="rebuilding-after-updates">Rebuilding After Updates<a class="headerlink" href="#rebuilding-after-updates" title="Permanent link">&para;</a></h2>
-<p>When a new version of KeyShift is released, download and unzip the new <code>keyshift.zip</code> over your existing directory, then rebuild:</p>
+<p>When a new version of KeyShift is released, stop the container and then pull before starting it back up.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>docker<span class="w"> </span>compose<span class="w"> </span>down
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>build<span class="w"> </span>--no-cache
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>pull<span class="w"> </span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div>
 <p>Your data in <code>./data/</code> will be preserved.</p>
