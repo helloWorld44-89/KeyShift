@@ -1,6 +1,7 @@
 site_name: KeyShift Docs
 site_description: Documentation for KeyShift – a Flask-based Wi-Fi SSID & QR Code management platform
 site_author: KeyShift Team
+site_url: https://helloWorld44-89.github.io/keyshift/
 docs_dir: docs
 repo_name: KeyShift
 

@@ -63,7 +63,7 @@ On first launch with no existing database, you will be redirected to `/initApp` 
 services:
   web:
     container_name: keyshift
-    image: keyshift:latest
+    image: ghcr.io/helloworld44-89/keyshift:latest
     ports:
       - "5000:5000"
     volumes:

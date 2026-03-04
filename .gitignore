@@ -80,3 +80,5 @@ config sample.json
 SECURITY_FIXES.md
 TESTING_GUIDE.md
 CODE_REVIEW.md
+
+site/
