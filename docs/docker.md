@@ -15,7 +15,7 @@ Download the latest `keyshift.tar.xz` release and unzip it into a directory of y
 wget https://github.com/helloWorld44-89/KeyShift/raw/refs/heads/main/keyshift.tar.xz
 
 # Unzip into a 'keyshift' directory
-unzip keyshift.tar.xz -d keyshift
+mkdir keyshift && tar -xf keyshift.tar.xz -C keyshift
 
 # Move into the project directory
 cd keyshift

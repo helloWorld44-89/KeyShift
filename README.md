@@ -32,7 +32,7 @@ KeyShift is a self-hosted web application that gives you full control over your 
 
 ```bash
 wget https://github.com/helloWorld44-89/KeyShift/raw/refs/heads/main/keyshift.tar.xz
-unzip keyshift.tar.xz -d keyshift
+mkdir keyshift && tar -xf keyshift.tar.xz -C keyshift
 cd keyshift
 ```
 
