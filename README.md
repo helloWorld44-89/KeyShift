@@ -63,7 +63,7 @@ docker compose up -d
 
 KeyShift will be available at **http://localhost:5000**.
 
-On first launch you will be redirected to the setup wizard to configure your controller and create your admin account.
+On first launch you will be redirected to the setup wizard to configure your controller and create your admin account (you can add more accounts later).
 
 ---
 
