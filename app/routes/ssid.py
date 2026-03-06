@@ -5,6 +5,7 @@ from app.models import SSID
 from app.config.config import getConfig
 from app.config.crontab import createCron, cronChange, deleteCron, manualCron
 from app.utilities.genPW import genPW
+from app.utilities.genQR import genQRCode
 from app.api.omada import OMADA
 from app.api.unifi import UNIFI
 from app import db
@@ -47,6 +48,7 @@ def changePW(id:int):
             db.session.commit()
             log.info(f"Password changed for {ssid.ssidName}")
             log.debug(f"Password changed for {ssid.ssidName}")
+            genQRCode(ssid, pw)
             return redirect(url_for('admin.admin'))
         else:
             log.error(f"Error changing password for {ssid.ssidName}: {info}")

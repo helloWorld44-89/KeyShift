@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app.models import user, SSID
 from app.config.config import getConfig, updateConfig
 from app.config.crontab import getCrontab, manualCron
+from app.utilities.genQR import genQRCode
 from app.api import unifi,omada
 from app import db
 import logging
@@ -128,6 +129,10 @@ def rescanSSIDs():
             omada.OMADA.initDBinfo()
         else:
             raise Exception(f'Wrong API Type: {config["apiType"]}')
+        ssids = SSID.query.all()
+        for i in ssids:
+            genQRCode(i)
+            x+=1
         return redirect(request.referrer)
     except Exception as e:
         log.error(f"Error creating user: {e}")

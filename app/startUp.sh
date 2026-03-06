@@ -1,10 +1,17 @@
 #!/bin/bash
 set -e
 
-echo "Starting cron..."
-cron 
+echo "$(date):Starting cron..."
+# Add docker env to enviroment for cron
+printenv > /etc/environment
+chmod 644 /etc/cron.d/qrCron
+chown root:root /etc/cron.d/qrCron
 
-echo "Starting Flask app KeyShift with Gunicorn..."
+cron
+
+
+
+echo "$(date):Starting Flask app KeyShift with Gunicorn..."
 
 exec gunicorn \
     --workers 4 \

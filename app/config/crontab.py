@@ -108,7 +108,7 @@ def createCron(ssid: SSID) -> str:
         with CronTab(tabfile=filePath) as cron:
             # Command runs the per-SSID rotation script inside the container
             job = cron.new(
-                command=f'root cd /app/app && /usr/bin/python3 -m app.ssid {ssid.id}',
+                command = f"bash -c 'source /etc/environment && cd /app && /usr/local/bin/python3 -m app.ssid {ssid.id} >> /etc/cron.d/cron.log 2>&1'",
                 comment=ssid.ssidName  # Tag with SSID name for later identification
             )
             job.setall(ssid.rotateFrequency)
