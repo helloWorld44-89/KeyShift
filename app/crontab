@@ -1,3 +1,3 @@
 # Job for changing guest password on rotation
-# @daily root /usr/local/bin/python3 /app/app/cron.py
+# SSID Cron job go below here
 
