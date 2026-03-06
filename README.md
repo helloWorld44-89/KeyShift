@@ -112,7 +112,7 @@ KeyShift was designed, architected, and built by me as a **self-taught, beginnin
 - 📝 Generating inline code comments and documentation
 - 🎨 Styling and layout assistance for the frontend UI
 
-The core application logic, architecture decisions, and all backend code are my own work. This project represents the kind of thing I believe developers at any experience level can build by tackling real problems and learning along the way.
+The core application logic, architecture decisions, and all backend code are my own work. This project represents the kind of thing I believe developers at any experience level can build by tackling real problems and learning along the way. Thank You for coming to my TED Talk.
 
 ---
 
