@@ -10,7 +10,7 @@ filePath = '/etc/cron.d/qrCron'
 # filePath = './app/crontab'
 
 
-def cronChange(ssid: SSID) -> str:
+def cronChange(ssid: SSID) -> bool:
     """
     Update the cron schedule for an existing rotation job.
 
@@ -21,7 +21,7 @@ def cronChange(ssid: SSID) -> str:
         ssid: The SSID whose rotation schedule should be updated.
 
     Returns:
-        A status message string.
+    True or False depending on the if their is an existing cronjob or there is an error
     """
     try:
         with CronTab(tabfile=filePath) as cron:
@@ -32,12 +32,13 @@ def cronChange(ssid: SSID) -> str:
                 job.setall(ssid.rotateFrequency)  # Apply new cron schedule
                 log.info(f"Modified existing job: {job}")
                 log.debug(f"Existing job {job} | {ssid}")
-                return f"Modified existing job: {job}"
+                return True
             else:
                 log.error(f"job not found: {existingJobs}")
-                return f"job not found: {existingJobs}"
+                return False
     except Exception as e:
         log.error({e} | {existingJobs})
+        return False
 
 
 def getCrontab(comment: str = None):
@@ -91,7 +92,7 @@ def manualCron(time: str, name: str) -> str:
             return "An Error has occured. No job found. Please see logs for details"
 
 
-def createCron(ssid: SSID) -> str:
+def createCron(ssid: SSID) -> bool:
     """
     Create a new cron job for scheduled password rotation.
 
@@ -102,7 +103,7 @@ def createCron(ssid: SSID) -> str:
         ssid: The SSID to create the rotation schedule for.
 
     Returns:
-        A confirmation or error message string.
+        A bool of job creation success or error
     """
     try:
         with CronTab(tabfile=filePath) as cron:
@@ -115,10 +116,10 @@ def createCron(ssid: SSID) -> str:
             cron.write()
             log.info(f"Created new cron job: {job}")
             log.debug(f"Created new Job: {job} | SSID: {ssid}")
-            return f"Created new cron job: {job}"
+            return True
     except Exception as e:
         log.error(e)
-        return f"An Error has occured: {e}"
+        return False
 
 
 def deleteCron(ssid: SSID) -> str:

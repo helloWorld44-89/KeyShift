@@ -76,20 +76,24 @@ def AddCronJob(id):
     try:
         rotate=request.args.get("rotateFrequency")
         ssid=SSID.query.get(id)
-        if rotate == "None":
-            deleteCron(ssid)
-            ssid.addRotation(None)
-            log.info(f"Cron job deleted for SSID: {ssid.ssidName}")
-            return redirect(request.referrer)
-        else:           
-            if ssid.rotateFrequency is not None:
-                ssid.addRotation(rotate)
-                cronChange(ssid)
-                log.info(f'Cron Time for SSID: {ssid.ssidName} updated to {rotate}.')
-            else:
-                ssid.addRotation(rotate)
-                createCron(ssid)
-                log.info(f"Cron job created for SSID: {ssid.ssidName} with schedule {rotate}")
+        if ssid.rotateFrequency is None:
+            createCron(ssid)
+            log.info(f"Cron Job created for {ssid.Name} for {ssid.rotateFrequency}.")
+        else:
+            if rotate == "None":
+                ssid.addRotation(None)
+                deleteCron(ssid)
+                log.info(f"Cron job deleted for SSID: {ssid.ssidName}")
+                return redirect(request.referrer)
+            else:           
+                if ssid.rotateFrequency != "None":
+                    ssid.addRotation(rotate)
+                    cronChange(ssid)
+                    log.info(f'Cron Time for SSID: {ssid.ssidName} updated to {rotate}.')
+                else:
+                    ssid.addRotation(rotate)
+                    createCron(ssid)
+                    log.info(f"Cron job created for SSID: {ssid.ssidName} with schedule {rotate}")
         return redirect(request.referrer)
     except Exception as e:
         log.error(f"Create Cron Error: {e}")
