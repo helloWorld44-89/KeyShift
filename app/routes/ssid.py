@@ -106,7 +106,6 @@ def networkQR(id):
     return render_template("pages/index.html",guest=guest)
 
 @bp.route("/api/guest")
-@login_required
 def getGuestQR():
     ssids=db.session.query(SSID)
     ssid = ssids.filter_by(isGuest=True).first()
