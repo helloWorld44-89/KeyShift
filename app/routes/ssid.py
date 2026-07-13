@@ -104,3 +104,16 @@ def AddCronJob(id):
 def networkQR(id):
     guest = SSID.query.get(id)
     return render_template("pages/index.html",guest=guest)
+
+@bp.route("/api/guest")
+@login_required
+def getGuestQR():
+    ssids=db.session.query(SSID)
+    ssid = ssids.filter_by(isGuest=True).first()
+    filePath = Path(f"static/img/{ssid.ssidName}.png")
+    if filePath.exists():
+        log.info(f"Qr Code accessed for {ssid.ssidName}")
+        return send_file(f"static/img/{ssid.ssidName}.png")
+    else:
+        log.error(f"QRCode getImage: 404 no image found for {filePath}")
+        abort(404,description="Resource Not Found")
