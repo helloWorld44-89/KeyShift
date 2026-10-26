@@ -143,10 +143,12 @@ class OMADA:
             siteID=OMADA.getSites(token)
             wlanList=OMADA.getWlanGroups(token,siteID)
             ssids=OMADA.getSSIDs(token,siteID,wlanList)
+            if not isinstance(ssids, list):
+                raise Exception(ssids)
             for i in ssids:
-                db.session.add(i)
+                s.upsert(i)
             db.session.commit()
-            log.info(f"{ssids} added to DataBase")
+            log.info(f"{len(ssids)} SSIDs synced to DataBase")
             return True
         except Exception as e:
             log.info(f"omada initDb Error: {e}")

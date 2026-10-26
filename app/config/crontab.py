@@ -37,7 +37,7 @@ def cronChange(ssid: SSID) -> bool:
                 log.error(f"job not found: {existingJobs}")
                 return False
     except Exception as e:
-        log.error({e} | {existingJobs})
+        log.error(f"cronChange Error: {e}")
         return False
 
 

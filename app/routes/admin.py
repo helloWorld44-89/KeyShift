@@ -132,21 +132,18 @@ def guestSwap(id):
 def rescanSSIDs():
     try:
         log.info(f"User: {current_user.id} has requested to rescan for SSIDs")
-        log.debug("Deleting SSIDs")
-        SSID.removeAllSSIDS()
         config= getConfig()
         if config["apiType"] == 'unifi':
-            unifi.UNIFI.initDBinfo()
+            synced = unifi.UNIFI.initDBinfo()
         elif config['apiType'] =='omada':
-            omada.OMADA.initDBinfo()
+            synced = omada.OMADA.initDBinfo()
         else:
             raise Exception(f'Wrong API Type: {config["apiType"]}')
-        ssids = SSID.query.all()
-        for i in ssids:
+        if not synced:
+            return {"message": "Could not read SSIDs from the controller. See logs for details"}, 502
+        for i in SSID.query.all():
             genQRCode(i)
-            x+=1
-        return redirect(request.referrer)
+        return redirect(request.referrer or url_for("admin.admin"))
     except Exception as e:
-        log.error(f"Error creating user: {e}")
-        return {"message": f"An Error has occured: {e}"}, 500
-       
+        log.error(f"Error rescanning SSIDs: {e}")
+        return {"message": "An error has occured rescanning SSIDs"}, 500

@@ -1,4 +1,5 @@
 from flask import Blueprint, request, url_for, redirect, abort, render_template, send_file
+from croniter import croniter
 from flask_login import login_required
 from app.routes.auth import admin_required
 from pathlib import Path
@@ -77,31 +78,30 @@ def getImage(id):
 @bp.route("/createCron/<int:id>")
 @admin_required
 def AddCronJob(id):
+    """Set, change or remove (rotateFrequency=None) the rotation schedule of an SSID."""
+    ssid = SSID.query.get_or_404(id)
+    rotate = request.args.get("rotateFrequency")
+    back = request.referrer or url_for("admin.admin")
     try:
-        rotate=request.args.get("rotateFrequency")
-        ssid=SSID.query.get(id)
-        if ssid.rotateFrequency is None:
-            createCron(ssid)
-            log.info(f"Cron Job created for {ssid.Name} for {ssid.rotateFrequency}.")
+        if rotate == "None":
+            ssid.addRotation(None)
+            deleteCron(ssid)
+            log.info(f"Cron job deleted for SSID: {ssid.ssidName}")
+            return redirect(back)
+        if not rotate or not croniter.is_valid(rotate):
+            log.warning(f"Invalid rotateFrequency {rotate!r} for SSID: {ssid.ssidName}")
+            return {"message": "rotateFrequency must be a valid cron expression"}, 400
+        ssid.addRotation(rotate)
+        if cronChange(ssid):
+            log.info(f"Cron time for SSID: {ssid.ssidName} updated to {rotate}.")
+        elif createCron(ssid):
+            log.info(f"Cron job created for SSID: {ssid.ssidName} with schedule {rotate}")
         else:
-            if rotate == "None":
-                ssid.addRotation(None)
-                deleteCron(ssid)
-                log.info(f"Cron job deleted for SSID: {ssid.ssidName}")
-                return redirect(request.referrer)
-            else:           
-                if ssid.rotateFrequency != "None":
-                    ssid.addRotation(rotate)
-                    cronChange(ssid)
-                    log.info(f'Cron Time for SSID: {ssid.ssidName} updated to {rotate}.')
-                else:
-                    ssid.addRotation(rotate)
-                    createCron(ssid)
-                    log.info(f"Cron job created for SSID: {ssid.ssidName} with schedule {rotate}")
-        return redirect(request.referrer)
+            return {"message": "Could not save the rotation schedule"}, 500
+        return redirect(back)
     except Exception as e:
         log.error(f"Create Cron Error: {e}")
-        return f"An Error has occured: {e}"
+        return {"message": "An error has occured setting the rotation schedule"}, 500
 
 @bp.route("/network/qr/<int:id>")
 @login_required

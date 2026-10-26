@@ -105,6 +105,26 @@ class SSID(db.Model):
             log.info(f"newSSID Error : {e}")
             return f'An Error has occured: {e}'
 
+    @staticmethod
+    def upsert(found) -> bool:
+        """
+        Insert a SSID reported by the controller, or refresh the controller-owned
+        fields (name, site, WLAN group, enabled) of the existing row with the same
+        ssidID. Local state (current password, rotation, guest flag) is kept.
+        Does not commit. Returns True if a new row was added.
+        """
+        existing = SSID.query.filter_by(ssidID=found.ssidID).first()
+        if existing is None:
+            db.session.add(found)
+            log.info(f"Added SSID {found.ssidName} to DataBase")
+            return True
+        existing.ssidName = found.ssidName
+        existing.siteID = found.siteID
+        existing.wlanGroupID = found.wlanGroupID
+        existing.status = found.status
+        log.info(f"SSID {found.ssidName} already exists in DataBase")
+        return False
+
     def makeGuest(self):
         """
         Mark this SSID as the active guest network.
