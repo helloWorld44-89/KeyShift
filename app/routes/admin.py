@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template, request, url_for, redirect, session
+from flask import Blueprint, render_template, request, url_for, redirect, session, abort
 from flask_login import login_required, current_user
 from app.models import user, SSID
 from app.config.config import getConfig, updateConfig
 from app.config.crontab import getCrontab, manualCron
 from app.utilities.genQR import genQRCode
 from app.api import unifi,omada
+from app.routes.auth import admin_required
 from app import db
 import logging
 
@@ -45,7 +46,7 @@ def logAction():
         return {"message": f"An Error has occured: {e}"}, 500
     
 @bp.route("/updateConfig", methods=['POST'])
-@login_required
+@admin_required
 def changeConfig():
     myConfig = getConfig()
     newConfig = request.form.to_dict()
@@ -60,12 +61,11 @@ def changeConfig():
     myConfig["controllerIp"]=newConfig["controller_host"]
     updateConfig(myConfig)
     log.info(f"Config updated")
-    log.debug(f"Config updated {newConfig}")
     
     return redirect(url_for('admin.admin', tab=newConfig["tab"]))
 
 @bp.route("/manualCron/<int:id>",methods=["POST"])
-@login_required
+@admin_required
 def manual(id):
     time =request.form["schedule"]
     name = SSID.query.get(id).ssidName
@@ -77,36 +77,44 @@ def manual(id):
 @bp.route("/users/add",methods=['POST'])
 def addNewUser():
     try:
-        if current_user.is_authenticated or session.get('init_mode'):
-            userName=request.form.get("newUsername")
-            passWord=request.form.get("newPassword")
-            passWordConfirm = request.form.get("newPasswordConfirm")
-            role = request.form.get("newRole")
-            if "/initApp" not in request.referrer: 
-                if role == 'admin':
-                    role =1
-                else:
-                    role = 0
-                if passWord == passWordConfirm:
-                    user.newUser(userName,passWord,role)
-                    log.info(f"New User Created: {userName}")
-                    return redirect(url_for("admin.admin",tab="security"))
-                else:
-                    log.error("Password Validation Failed for New User Creation")
-                    return redirect(url_for("admin.admin",tab="security",))
-            else:
-                userName=request.form.get("newUsername")
-                passWord=request.form.get("newPassword")
-                role = 1
-                user.newUser(userName,passWord,role)
-                log.info(f"Initial User Created: {userName}")
-                return {"message": "Success"}
-        else:
+        userName=request.form.get("newUsername")
+        passWord=request.form.get("newPassword")
+
+        # First-run: with no users yet, the visitor creates the initial admin.
+        # Once any user exists this branch is closed for good.
+        if user.query.count() == 0:
+            if session.get('init_mode') is not True:
+                log.error("Initial user creation attempted without visiting /initApp")
+                return {"message": "Unauthorized"}, 401
+            if not userName or not passWord:
+                return {"message": "Username and password are required"}, 400
+            user.newUser(userName, passWord, 1)
+            first = user.query.filter_by(username=userName).first()
+            if first is None:
+                return {"message": "Could not create the initial user"}, 500
+            session['init_user'] = first.id  # binds setup privileges to this session
+            log.info(f"Initial User Created: {userName}")
+            return {"message": "Success"}
+
+        # Afterwards only a logged-in admin may add users.
+        if not current_user.is_authenticated:
             log.error("Unauthorized User Creation Attempt")
             return {"message": "Unauthorized"}, 401
+        if not current_user.admin:
+            log.warning(f"{current_user.username} (non-admin) tried to create a user")
+            abort(403)
+        if request.form.get("newPasswordConfirm") != passWord:
+            log.error("Password Validation Failed for New User Creation")
+            return redirect(url_for("admin.admin",tab="security"))
+        role = 1 if request.form.get("newRole") == 'admin' else 0
+        user.newUser(userName,passWord,role)
+        log.info(f"New User Created: {userName} by {current_user.username}")
+        return redirect(url_for("admin.admin",tab="security"))
     except Exception as e:
+        if hasattr(e, "code"):  # let abort() HTTP errors through
+            raise
         log.error(f"Error creating user: {e}")
-        return {"message": f"An Error has occured: {e}"}, 500
+        return {"message": "An error has occured creating the user"}, 500
 
 @bp.route("/makeguest/<int:id>")
 @login_required
@@ -116,7 +124,7 @@ def guestSwap(id):
     return redirect(request.referrer)
 
 @bp.route("/rescanSSIDs")
-@login_required
+@admin_required
 def rescanSSIDs():
     try:
         log.info(f"User: {current_user.id} has requested to rescan for SSIDs")

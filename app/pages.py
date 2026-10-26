@@ -20,7 +20,7 @@ def guest():
         return redirect(url_for("setup.initApp"))
     ssids=db.session.query(SSID)
     guestSSID = ssids.filter_by(isGuest=True).first()
-    return render_template("pages/index.html",guest=guestSSID)
+    return render_template("pages/index.html", guest=guestSSID, qr_url=url_for("ssid.getGuestQR"))
 
 
 

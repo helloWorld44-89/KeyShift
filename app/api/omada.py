@@ -42,13 +42,12 @@ class OMADA:
                 'CSRF-Token': token['result']['token']
             }
             response=session.get(f"{baseUrl}{omadacid}/api/v2/sites?currentPage=1&currentPageSize=1000",headers=payload,verify=False)
-            print(response.text)
             siteList=[]
             for site in response.json().get("result", {}).get("data", []):
                 siteList.append(site["id"])
             return siteList
         except Exception as e:
-            log.info(f"OMADA get Sites Error: {e}, {token}")
+            log.info(f"OMADA get Sites Error: {e}")
             return f"An Error has occured: {e}"
     @staticmethod 
     def getWlanGroups(token,siteID):
@@ -103,7 +102,6 @@ class OMADA:
             baseUrl=f"https://{myconfig["controllerIp"]}:8043/"
             requests.packages.urllib3.disable_warnings()
             token=OMADA.login()
-            print(token)
             omadacid = token["result"]["omadacId"]
             url = f"{baseUrl}{omadacid}/api/v2/sites/{ssid.siteID}/setting/wlans/{ssid.wlanGroupID}/ssids?currentPage=1&currentPageSize=100"
             headers = {
@@ -127,11 +125,11 @@ class OMADA:
             }
             info = session.patch(url, headers=headers,json = payload,verify=False)
             if info.status_code == 200:
-                log.info(f"Wi-Fi {ssid.ssidName} password changed to {newPW}")
-                log.debug(f"Wi-Fi PW Changed: {payload} ")
+                log.info(f"Wi-Fi {ssid.ssidName} password changed")
+                log.debug(f"Wi-Fi PW Changed for {ssid.ssidName}")
             else:
                 log.info(f"Error: {info.status_code} - {info.text} ")
-                log.debug(f"Error: {info.status_code} - {info.text}, info sent: {payload}")
+                log.debug(f"Error: {info.status_code} - {info.text}")
                 return f"Error: {info.status_code} - {info.text}"
             return True
         except Exception as e:
