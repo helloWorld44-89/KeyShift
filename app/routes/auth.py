@@ -103,7 +103,7 @@ def login():
             flash('Incorrect Username or Password', 'danger')
     return render_template("pages/login.html")
 
-@bp.route("/logout")
+@bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
     log.info(f"{current_user.username} logged out")

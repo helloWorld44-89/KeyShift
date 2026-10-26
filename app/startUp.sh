@@ -14,7 +14,8 @@ cron
 echo "$(date):Starting Flask app KeyShift with Gunicorn..."
 
 exec gunicorn \
-    --workers 4 \
+    --workers ${GUNICORN_WORKERS:-1} \
+    --threads ${GUNICORN_THREADS:-8} \
     --bind 0.0.0.0:5000 \
     --timeout 120 \
     --access-logfile - \

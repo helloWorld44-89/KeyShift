@@ -109,13 +109,10 @@ class UNIFI:
             siteIDs=UNIFI.getSiteIDs()
             wlans=UNIFI.getWifiID(siteIDs)
             ssidList=UNIFI.getSSIDInfo(siteIDs,wlans)
+            if not isinstance(ssidList, list):
+                raise Exception(ssidList)
             for ssid in ssidList:
-                existingSSID=s.query.filter_by(ssidID=ssid.ssidID).first()
-                if not existingSSID:
-                    db.session.add(ssid)
-                    log.info(f"Added SSID {ssid.ssidName} to DataBase")
-                else:
-                    log.info(f"SSID {ssid.ssidName} already exists in DataBase")
+                s.upsert(ssid)
             db.session.commit()
             return True
         except Exception as e:

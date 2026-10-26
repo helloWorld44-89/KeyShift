@@ -6,6 +6,7 @@
 
     <title>KeyShift</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -38,7 +39,7 @@
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+              <li><a data-post class="dropdown-item text-danger" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
             </ul>
           </div>
         </div>
@@ -71,7 +72,7 @@
               <span>Settings</span>
             </button>
             <div style="flex-grow: 1;"></div>
-            <a class="sidebar-item logout" href="/logout">
+            <a data-post class="sidebar-item logout" href="/logout">
               <i class="bi bi-box-arrow-right"></i>
               <span>Logout</span>
             </a>
@@ -147,7 +148,7 @@
                   <div>
                     <h6 class="fw-bold mb-1 text-warning-emphasis">No SSIDs Found</h6>
                     <p class="mb-2 text-muted small">KeyShift couldn't detect any wireless networks from your controller. This may be due to a misconfiguration, unreachable controller, or no networks being defined yet.</p>
-                    <a href="/rescanSSIDs" class="btn btn-sm btn-warning fw-semibold">
+                    <a data-post href="/rescanSSIDs" class="btn btn-sm btn-warning fw-semibold">
                       <i class="bi bi-arrow-clockwise"></i> Rescan for SSIDs
                     </a>
                   </div>
@@ -191,27 +192,27 @@
                         </td>
                         <td>
                           <div class="btn-group">
-                            <a href="/makeguest/{{ i.id }}" class="btn btn-sm btn-outline-primary ssidEdit disabled" {{ "disabled" if i.isGuest }}>
+                            <a data-post href="/makeguest/{{ i.id }}" class="btn btn-sm btn-outline-primary ssidEdit disabled" {{ "disabled" if i.isGuest }}>
                               <i class="bi bi-star"></i> Make Guest
                             </a>
                             <button class="btn btn-sm btn-outline-primary dropdown-toggle ssidEdit disabled" type="button" data-bs-toggle="dropdown">
                               <i class="bi bi-arrow-clockwise"></i> Rotate
                             </button>
                             <ul class="dropdown-menu">
-                              <li><a href="/createCron/{{ i.id }}?rotateFrequency=None" class="dropdown-item {{ 'disabled' if not i.pwRotate }}">
+                              <li><a data-post href="/createCron/{{ i.id }}?rotateFrequency=None" class="dropdown-item {{ 'disabled' if not i.pwRotate }}">
                                 <i class="bi bi-x-circle"></i> Disable
                               </a></li>
-                              <li><a href="/createCron/{{ i.id }}?rotateFrequency=@daily" class="dropdown-item {{ 'disabled' if i.rotateFrequency == '@daily' }}">
+                              <li><a data-post href="/createCron/{{ i.id }}?rotateFrequency=@daily" class="dropdown-item {{ 'disabled' if i.rotateFrequency == '@daily' }}">
                                 <i class="bi bi-calendar-day"></i> Daily
                               </a></li>
-                              <li><a href="/createCron/{{ i.id }}?rotateFrequency=@weekly" class="dropdown-item {{ 'disabled' if i.rotateFrequency == '@weekly' }}">
+                              <li><a data-post href="/createCron/{{ i.id }}?rotateFrequency=@weekly" class="dropdown-item {{ 'disabled' if i.rotateFrequency == '@weekly' }}">
                                 <i class="bi bi-calendar-week"></i> Weekly
                               </a></li>
-                              <li><a href="/createCron/{{ i.id }}?rotateFrequency=@monthly" class="dropdown-item {{ 'disabled' if i.rotateFrequency == '@monthly' }}">
+                              <li><a data-post href="/createCron/{{ i.id }}?rotateFrequency=@monthly" class="dropdown-item {{ 'disabled' if i.rotateFrequency == '@monthly' }}">
                                 <i class="bi bi-calendar-month"></i> Monthly
                               </a></li>
                             </ul>
-                            <a href="/changepw/{{ i.id }}" class="btn btn-sm btn-outline-success ssidEdit disabled">
+                            <a data-post href="/changepw/{{ i.id }}" class="btn btn-sm btn-outline-success ssidEdit disabled">
                               <i class="bi bi-key"></i> Change PW
                             </a>
                           </div>
@@ -231,7 +232,7 @@
                 <h2 class="fw-bold">Configuration</h2>
                 <div class="d-flex gap-2">
                   <!-- Rescan SSIDs Button -->
-                  <a href="/rescanSSIDs" class="btn btn-modern btn-modern-warning">
+                  <a data-post href="/rescanSSIDs" class="btn btn-modern btn-modern-warning">
                     <i class="bi bi-arrow-clockwise"></i> Rescan SSIDs
                   </a>
                   <button class="btn btn-modern btn-modern-primary" id="enableEdit">
