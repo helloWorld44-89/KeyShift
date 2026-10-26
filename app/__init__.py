@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, request
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -16,9 +17,13 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 # Rate limiter: keyed by remote IP, default limits apply to all routes
+# Counters live in RATELIMIT_STORAGE_URI (e.g. redis://host:6379). The default
+# in-memory store is per process, so it is only exact with a single Gunicorn worker.
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["200 per day", "20 per hour"]
+    default_limits=["200 per day", "20 per hour"],
+    default_limits_exempt_when=lambda: request.endpoint == "static",
+    storage_uri=os.environ.get("RATELIMIT_STORAGE_URI", "memory://"),
 )
 
 
@@ -39,6 +44,13 @@ def create_app(test_config=None):
 
     if test_config:
         app.config.update(test_config)
+
+    # Behind a reverse proxy/ingress, trust that many X-Forwarded-* hops so the
+    # rate limiter and logs see the real client IP. 0 (default) trusts none,
+    # because the header is spoofable when the app is reachable directly.
+    proxies = int(app.config.get("TRUSTED_PROXY_COUNT", os.environ.get("TRUSTED_PROXY_COUNT", 0)))
+    if proxies:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=proxies, x_proto=proxies, x_host=proxies)
 
     # --- Extensions ---
     db.init_app(app)

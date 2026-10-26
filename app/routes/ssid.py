@@ -20,13 +20,13 @@ log = logging.getLogger(__name__)
 
 
 
-@bp.route("/changepw/<int:id>")
+@bp.route("/changepw/<int:id>", methods=["POST"])
 @login_required
 def changePW(id:int):
     try:
         myconfig = getConfig()
         ssid=SSID.query.get(id)
-        pw = request.args.get("pw",'auto')
+        pw = request.values.get("pw", 'auto')
         if pw != 'auto':
             if myconfig["apiType"] == "omada":
                 info=OMADA.changePW(ssid,pw)
@@ -75,12 +75,12 @@ def _sendQR(ssid):
 def getImage(id):
     return _sendQR(SSID.query.get_or_404(id))
 
-@bp.route("/createCron/<int:id>")
+@bp.route("/createCron/<int:id>", methods=["POST"])
 @admin_required
 def AddCronJob(id):
     """Set, change or remove (rotateFrequency=None) the rotation schedule of an SSID."""
     ssid = SSID.query.get_or_404(id)
-    rotate = request.args.get("rotateFrequency")
+    rotate = request.values.get("rotateFrequency")
     back = request.referrer or url_for("admin.admin")
     try:
         if rotate == "None":

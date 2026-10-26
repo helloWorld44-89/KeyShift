@@ -120,14 +120,14 @@ def addNewUser():
         log.error(f"Error creating user: {e}")
         return {"message": "An error has occured creating the user"}, 500
 
-@bp.route("/makeguest/<int:id>")
+@bp.route("/makeguest/<int:id>", methods=["POST"])
 @admin_required
 def guestSwap(id):
     ssid=SSID.query.get(id)
     ssid.makeGuest()
     return redirect(request.referrer)
 
-@bp.route("/rescanSSIDs")
+@bp.route("/rescanSSIDs", methods=["POST"])
 @admin_required
 def rescanSSIDs():
     try:

@@ -1,10 +1,37 @@
 // JavaScript for admin page
+function csrfToken(){
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.content : '';
+}
+// State-changing links (<a data-post href="...">) are submitted as POST forms with a
+// CSRF token; query-string parameters in the href become form fields.
+document.addEventListener("click", function(event){
+  const link = event.target.closest("a[data-post]");
+  if (!link || link.classList.contains("disabled") || link.hasAttribute("disabled")) return;
+  event.preventDefault();
+  const url = new URL(link.href, window.location.href);
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = url.pathname;
+  const fields = new URLSearchParams(url.search);
+  fields.set("csrf_token", csrfToken());
+  fields.forEach((value, name) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+});
 // Function to send logs to the server
 function sendLog(message){
     fetch('/log', {
       method: 'POST', 
       headers: {
         'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken(),
       },
       body: JSON.stringify({ "message": message }),
     })

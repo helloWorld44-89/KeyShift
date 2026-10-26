@@ -1,3 +1,4 @@
+import pytest
 from app.models import user, SSID
 from app.utilities.genQR import genQRCode, escapeWifi, qrPath
 from conftest import make_user, make_ssid, login
@@ -66,10 +67,10 @@ def test_non_admin_cannot_create_users(app, standard_client):
 
 def test_non_admin_blocked_from_admin_routes(app, standard_client):
     assert standard_client.post("/updateConfig", data={}).status_code == 403
-    assert standard_client.get("/rescanSSIDs").status_code == 403
+    assert standard_client.post("/rescanSSIDs").status_code == 403
     assert standard_client.post("/manualCron/1", data={"schedule": "@daily"}).status_code == 403
-    assert standard_client.get("/createCron/1").status_code == 403
-    assert standard_client.get("/makeguest/1").status_code == 403
+    assert standard_client.post("/createCron/1").status_code == 403
+    assert standard_client.post("/makeguest/1").status_code == 403
 
 
 def test_admin_can_create_users(app, admin_client):
@@ -153,3 +154,43 @@ def test_generated_setup_token_is_stored_and_cleared(tmp_path, monkeypatch):
         r = c.post("/users/add", data={"newUsername": "a", "newPassword": "x", "setupToken": token})
         assert r.get_json() == {"message": "Success"}
         assert not (tmp_path / "inst" / "setup_token").exists()
+
+
+# --- State-changing routes are POST-only -----------------------------------
+
+@pytest.mark.parametrize("path", ["/changepw/1", "/makeguest/1", "/rescanSSIDs",
+                                  "/createCron/1?rotateFrequency=@daily", "/logout"])
+def test_state_changing_routes_reject_get(app, admin_client, path):
+    make_ssid("Home", "abc")
+    assert admin_client.get(path).status_code == 405
+
+
+def test_logout_via_post(app, admin_client):
+    assert admin_client.post("/logout").status_code == 302
+    assert admin_client.get("/admin").status_code == 302  # back to login
+
+
+def test_state_changing_post_requires_csrf(app):
+    app.config["WTF_CSRF_ENABLED"] = True
+    make_user("boss")
+    c = app.test_client()
+    login_page = c.get("/login")
+    assert login_page.status_code == 200
+    # No CSRF token -> rejected before reaching the view
+    assert c.post("/rescanSSIDs").status_code == 400
+    assert c.post("/logout").status_code == 400
+
+
+def test_admin_page_posts_state_changes_with_csrf(app, admin_client, monkeypatch):
+    import re
+    import app.routes.admin as admin
+    monkeypatch.setattr(admin, "getConfig", lambda: {
+        "apiType": "unifi", "controllerIp": "1.2.3.4",
+        "apiUser": {"userName": None, "passWord": None, "apiKey": None}})
+    make_ssid("Home", "abc")
+    html = admin_client.get("/admin").get_data(as_text=True)
+    assert 'name="csrf-token"' in html
+    links = re.findall(r'<a [^>]*href="(/(?:logout|rescanSSIDs|makeguest|createCron|changepw)[^"]*)"[^>]*>', html)
+    assert links
+    for tag in re.findall(r'<a [^>]*href="/(?:logout|rescanSSIDs|makeguest|createCron|changepw)[^>]*>', html):
+        assert "data-post" in tag, tag
