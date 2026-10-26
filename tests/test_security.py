@@ -5,6 +5,9 @@ from conftest import make_user, make_ssid, login
 
 # --- QR access -----------------------------------------------------------
 
+TOKEN = "test-setup-token"
+
+
 def test_escape_wifi_special_chars():
     assert escapeWifi('a;b,c:d"e\\f') == r'a\;b\,c\:d\"e\\f'
 
@@ -65,6 +68,8 @@ def test_non_admin_blocked_from_admin_routes(app, standard_client):
     assert standard_client.post("/updateConfig", data={}).status_code == 403
     assert standard_client.get("/rescanSSIDs").status_code == 403
     assert standard_client.post("/manualCron/1", data={"schedule": "@daily"}).status_code == 403
+    assert standard_client.get("/createCron/1").status_code == 403
+    assert standard_client.get("/makeguest/1").status_code == 403
 
 
 def test_admin_can_create_users(app, admin_client):
@@ -86,7 +91,7 @@ def test_anonymous_cannot_create_users_once_one_exists(app, client):
 # --- First-run setup -----------------------------------------------------
 
 def test_setup_requires_visiting_initapp(client):
-    r = client.post("/users/add", data={"newUsername": "a", "newPassword": "x"})
+    r = client.post("/users/add", data={"newUsername": "a", "newPassword": "x", "setupToken": TOKEN})
     assert r.status_code == 401
     assert user.query.count() == 0
 
@@ -95,7 +100,7 @@ def test_setup_privileges_bound_to_creating_session(app):
     a, b = app.test_client(), app.test_client()
     a.get("/initApp")
     b.get("/initApp")  # attacker also arrives before setup finishes
-    r = a.post("/users/add", data={"newUsername": "admin", "newPassword": "x"})
+    r = a.post("/users/add", data={"newUsername": "admin", "newPassword": "x", "setupToken": TOKEN})
     assert r.get_json() == {"message": "Success"}
     assert user.query.one().admin
 
@@ -114,6 +119,37 @@ def test_setup_privileges_cleared_after_init(app, monkeypatch):
     monkeypatch.setattr(setup.UNIFI, "initDBinfo", staticmethod(lambda: True))
     a = app.test_client()
     a.get("/initApp")
-    a.post("/users/add", data={"newUsername": "admin", "newPassword": "x"})
+    a.post("/users/add", data={"newUsername": "admin", "newPassword": "x", "setupToken": TOKEN})
     assert a.get("/init").get_json()["message"] == "Success"
     assert a.get("/init").status_code == 401  # flag gone; not logged in
+
+
+def test_setup_requires_valid_token(app):
+    a = app.test_client()
+    a.get("/initApp")
+    for token in (None, "", "wrong"):
+        data = {"newUsername": "admin", "newPassword": "x"}
+        if token is not None:
+            data["setupToken"] = token
+        assert a.post("/users/add", data=data).status_code == 403
+    assert user.query.count() == 0
+    r = a.post("/users/add", data={"newUsername": "admin", "newPassword": "x", "setupToken": TOKEN})
+    assert r.get_json() == {"message": "Success"}
+
+
+def test_generated_setup_token_is_stored_and_cleared(tmp_path, monkeypatch):
+    monkeypatch.delenv("SETUP_TOKEN", raising=False)
+    from app import create_app, db
+    app = create_app({"TESTING": True, "SQLALCHEMY_DATABASE_URI": "sqlite://",
+                      "WTF_CSRF_ENABLED": False, "RATELIMIT_ENABLED": False,
+                      "QR_DIR": str(tmp_path)})
+    app.instance_path = str(tmp_path / "inst")
+    with app.app_context():
+        db.create_all()
+        c = app.test_client()
+        c.get("/initApp")
+        token = (tmp_path / "inst" / "setup_token").read_text()
+        assert len(token) >= 16
+        r = c.post("/users/add", data={"newUsername": "a", "newPassword": "x", "setupToken": token})
+        assert r.get_json() == {"message": "Success"}
+        assert not (tmp_path / "inst" / "setup_token").exists()

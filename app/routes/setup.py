@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, session, url_for, redirect
 from flask_login import current_user
-from app.routes.auth import setup_in_progress
+from app.routes.auth import setup_in_progress, setup_token
 from app.models import user, SSID
 import time
 from app.config.config import getConfig, updateConfig
@@ -19,6 +19,7 @@ def initApp():
     users = user.query.all()
     if len(users)== 0:
         session['init_mode'] = True
+        log.warning(f"First-run setup: enter this setup token to create the admin user: {setup_token()}")
         return render_template("pages/initApp.html")
     else:
         log.error(f"Init App Requested: User Count: {len(users)}")

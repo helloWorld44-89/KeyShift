@@ -1,5 +1,6 @@
 from flask import Blueprint, request, url_for, redirect, abort, render_template, send_file
 from flask_login import login_required
+from app.routes.auth import admin_required
 from pathlib import Path
 from app.models import SSID
 from app.config.config import getConfig
@@ -74,7 +75,7 @@ def getImage(id):
     return _sendQR(SSID.query.get_or_404(id))
 
 @bp.route("/createCron/<int:id>")
-@login_required
+@admin_required
 def AddCronJob(id):
     try:
         rotate=request.args.get("rotateFrequency")

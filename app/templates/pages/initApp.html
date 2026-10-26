@@ -46,6 +46,11 @@
           <form id="newUserForm">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <div class="mb-3">
+              <label class="form-label">Setup Token</label>
+              <input type="text" class="form-control form-control-modern" name="setupToken" placeholder="From the server logs or SETUP_TOKEN" autocomplete="off" />
+              <div class="form-text">Find it in the container logs (<code>docker compose logs</code>) or set <code>SETUP_TOKEN</code> in your <code>.env</code>.</div>
+            </div>
+            <div class="mb-3">
               <label class="form-label">Username</label>
               <input type="text" class="form-control form-control-modern" id="username" name="newUsername" placeholder="Choose a username" autocomplete="username" />
             </div>

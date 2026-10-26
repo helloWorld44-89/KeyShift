@@ -5,7 +5,7 @@ from app.config.config import getConfig, updateConfig
 from app.config.crontab import getCrontab, manualCron
 from app.utilities.genQR import genQRCode
 from app.api import unifi,omada
-from app.routes.auth import admin_required
+from app.routes.auth import admin_required, setup_token_valid, clear_setup_token
 from app import db
 import logging
 
@@ -86,12 +86,16 @@ def addNewUser():
             if session.get('init_mode') is not True:
                 log.error("Initial user creation attempted without visiting /initApp")
                 return {"message": "Unauthorized"}, 401
+            if not setup_token_valid(request.form.get("setupToken")):
+                log.error("Initial user creation attempted with a wrong setup token")
+                return {"message": "Invalid setup token"}, 403
             if not userName or not passWord:
                 return {"message": "Username and password are required"}, 400
             user.newUser(userName, passWord, 1)
             first = user.query.filter_by(username=userName).first()
             if first is None:
                 return {"message": "Could not create the initial user"}, 500
+            clear_setup_token()
             session['init_user'] = first.id  # binds setup privileges to this session
             log.info(f"Initial User Created: {userName}")
             return {"message": "Success"}
@@ -117,7 +121,7 @@ def addNewUser():
         return {"message": "An error has occured creating the user"}, 500
 
 @bp.route("/makeguest/<int:id>")
-@login_required
+@admin_required
 def guestSwap(id):
     ssid=SSID.query.get(id)
     ssid.makeGuest()

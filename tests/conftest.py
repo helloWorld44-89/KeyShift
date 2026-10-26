@@ -15,6 +15,7 @@ def app(tmp_path):
         "WTF_CSRF_ENABLED": False,
         "RATELIMIT_ENABLED": False,
         "QR_DIR": str(tmp_path),
+        "SETUP_TOKEN": "test-setup-token",
     })
     with app.app_context():
         db.create_all()

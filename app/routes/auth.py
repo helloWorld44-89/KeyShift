@@ -1,5 +1,8 @@
+import hmac
+import os
+import secrets
 from functools import wraps
-from flask import Blueprint, render_template, request, url_for, redirect, flash, session, abort
+from flask import Blueprint, current_app, render_template, request, url_for, redirect, flash, session, abort
 from flask_bcrypt import bcrypt
 from flask_login import login_user, login_required, logout_user, current_user
 from app.models import user
@@ -34,6 +37,46 @@ def setup_in_progress() -> bool:
     return (first is not None
             and session.get("init_mode") is True
             and session.get("init_user") == first.id)
+
+
+def _setup_token_path() -> str:
+    return os.path.join(current_app.instance_path, "setup_token")
+
+
+def setup_token() -> str:
+    """
+    The one-time token a visitor must present to create the first admin.
+
+    Taken from the SETUP_TOKEN setting/env var if set. Otherwise a random token
+    is generated, stored in instance/setup_token (shared by all Gunicorn
+    workers) and logged so the operator can read it from the container logs.
+    """
+    token = current_app.config.get("SETUP_TOKEN") or os.environ.get("SETUP_TOKEN")
+    if token:
+        return token
+    path = _setup_token_path()
+    os.makedirs(current_app.instance_path, exist_ok=True)
+    try:
+        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError:
+        with open(path) as f:
+            return f.read().strip()
+    token = secrets.token_urlsafe(16)
+    with os.fdopen(fd, "w") as f:
+        f.write(token)
+    return token
+
+
+def clear_setup_token():
+    """Remove the generated token once the first user exists."""
+    try:
+        os.remove(_setup_token_path())
+    except OSError:
+        pass
+
+
+def setup_token_valid(candidate) -> bool:
+    return bool(candidate) and hmac.compare_digest(str(candidate), setup_token())
 
 
 @bp.route("/login", methods=["GET", "POST"])
