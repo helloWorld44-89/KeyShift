@@ -22,8 +22,11 @@ limiter = Limiter(
 )
 
 
-def create_app():
-    """Application factory — creates and configures the Flask app instance."""
+def create_app(test_config=None):
+    """Application factory — creates and configures the Flask app instance.
+
+    test_config, if given, overrides the config and skips first-run DB creation.
+    """
     app = Flask(__name__)
 
     # --- Config ---
@@ -33,6 +36,9 @@ def create_app():
 
     # SQLite database stored in the instance/ folder (excluded from version control)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///KeyShift.db'
+
+    if test_config:
+        app.config.update(test_config)
 
     # --- Extensions ---
     db.init_app(app)
@@ -78,7 +84,8 @@ def create_app():
         return user.query.get(int(id))
 
     # Initialise the database on first run (skips if DB already exists)
-    _maybe_init_db(app)
+    if not test_config:
+        _maybe_init_db(app)
 
     return app
 

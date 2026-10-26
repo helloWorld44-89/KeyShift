@@ -1,0 +1,119 @@
+from app.models import user, SSID
+from app.utilities.genQR import genQRCode, escapeWifi, qrPath
+from conftest import make_user, make_ssid, login
+
+
+# --- QR access -----------------------------------------------------------
+
+def test_escape_wifi_special_chars():
+    assert escapeWifi('a;b,c:d"e\\f') == r'a\;b\,c\:d\"e\\f'
+
+
+def test_wifi_payload_is_escaped(app, monkeypatch):
+    import app.utilities.genQR as genqr
+    captured = {}
+    real = genqr.qrcode.QRCode
+
+    class Spy(real):
+        def add_data(self, data, *a, **k):
+            captured["data"] = data
+            return super().add_data(data, *a, **k)
+    monkeypatch.setattr(genqr.qrcode, "QRCode", Spy)
+    s = make_ssid("net", "abc")
+    genQRCode(s, 'x;y\\z')
+    assert captured["data"] == r"WIFI:S:net;T:WPA;P:x\;y\\z;;"
+
+
+def test_qr_not_served_from_static(app, client):
+    s = make_ssid("guestnet", "g1", guest=True)
+    genQRCode(s)
+    assert client.get("/static/img/guestnet.png").status_code == 404
+    assert client.get("/static/img/g1.png").status_code == 404
+
+
+def test_guest_qr_is_public_but_only_for_guest(app, client):
+    guest = make_ssid("guestnet", "g1", guest=True)
+    other = make_ssid("private", "p1")
+    genQRCode(guest)
+    genQRCode(other)
+    assert client.get("/api/guest").status_code == 200
+    assert client.get(f"/qr/{other.id}").status_code == 302  # login redirect
+    assert client.get(f"/qr/{guest.id}").status_code == 302
+
+
+def test_guest_qr_404_without_guest(client):
+    assert client.get("/api/guest").status_code == 404
+
+
+def test_logged_in_user_can_fetch_any_qr(app, standard_client):
+    other = make_ssid("private", "p1")
+    genQRCode(other)
+    assert standard_client.get(f"/qr/{other.id}").status_code == 200
+
+
+# --- Roles ---------------------------------------------------------------
+
+def test_non_admin_cannot_create_users(app, standard_client):
+    r = standard_client.post("/users/add", data={
+        "newUsername": "evil", "newPassword": "x", "newPasswordConfirm": "x",
+        "newRole": "admin"})
+    assert r.status_code == 403
+    assert user.query.filter_by(username="evil").first() is None
+
+
+def test_non_admin_blocked_from_admin_routes(app, standard_client):
+    assert standard_client.post("/updateConfig", data={}).status_code == 403
+    assert standard_client.get("/rescanSSIDs").status_code == 403
+    assert standard_client.post("/manualCron/1", data={"schedule": "@daily"}).status_code == 403
+
+
+def test_admin_can_create_users(app, admin_client):
+    r = admin_client.post("/users/add", data={
+        "newUsername": "new", "newPassword": "x", "newPasswordConfirm": "x",
+        "newRole": "admin"})
+    assert r.status_code == 302
+    assert user.query.filter_by(username="new").first().admin
+
+
+def test_anonymous_cannot_create_users_once_one_exists(app, client):
+    make_user("boss")
+    r = client.post("/users/add", data={"newUsername": "evil", "newPassword": "x"},
+                    headers={"Referer": "http://localhost/initApp"})
+    assert r.status_code == 401
+    assert user.query.count() == 1
+
+
+# --- First-run setup -----------------------------------------------------
+
+def test_setup_requires_visiting_initapp(client):
+    r = client.post("/users/add", data={"newUsername": "a", "newPassword": "x"})
+    assert r.status_code == 401
+    assert user.query.count() == 0
+
+
+def test_setup_privileges_bound_to_creating_session(app):
+    a, b = app.test_client(), app.test_client()
+    a.get("/initApp")
+    b.get("/initApp")  # attacker also arrives before setup finishes
+    r = a.post("/users/add", data={"newUsername": "admin", "newPassword": "x"})
+    assert r.get_json() == {"message": "Success"}
+    assert user.query.one().admin
+
+    # session B can no longer create users or touch config
+    assert b.post("/users/add", data={"newUsername": "evil", "newPassword": "x"}).status_code == 401
+    assert b.post("/newConfig", data={}, headers={"Referer": "/initApp"}).status_code == 401
+    assert b.get("/init").status_code == 401
+    # session A still can
+    assert a.post("/newConfig", data={}).status_code != 401
+
+
+def test_setup_privileges_cleared_after_init(app, monkeypatch):
+    import app.routes.setup as setup
+    monkeypatch.setattr(setup, "getConfig", lambda: {"apiType": "unifi"})
+    monkeypatch.setattr(setup.time, "sleep", lambda s: None)
+    monkeypatch.setattr(setup.UNIFI, "initDBinfo", staticmethod(lambda: True))
+    a = app.test_client()
+    a.get("/initApp")
+    a.post("/users/add", data={"newUsername": "admin", "newPassword": "x"})
+    assert a.get("/init").get_json()["message"] == "Success"
+    assert a.get("/init").status_code == 401  # flag gone; not logged in

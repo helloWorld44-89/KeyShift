@@ -5,7 +5,7 @@ from app.models import SSID
 from app.config.config import getConfig
 from app.config.crontab import createCron, cronChange, deleteCron, manualCron
 from app.utilities.genPW import genPW
-from app.utilities.genQR import genQRCode
+from app.utilities.genQR import genQRCode, qrPath
 from app.api.omada import OMADA
 from app.api.unifi import UNIFI
 from app import db
@@ -58,17 +58,20 @@ def changePW(id:int):
         return abort(500,f"An Error has occured: {e}")
  
 
+def _sendQR(ssid):
+    """Return the stored QR image for an SSID, or 404 if it hasn't been generated."""
+    filePath = Path(qrPath(ssid))
+    if filePath.exists():
+        log.info(f"Qr Code accessed for {ssid.ssidName}")
+        return send_file(filePath, mimetype="image/png", max_age=0)
+    log.error(f"QRCode: 404 no image found for {ssid.ssidName}")
+    abort(404, description="Resource Not Found")
+
+
 @bp.route("/qr/<int:id>")
 @login_required
 def getImage(id):
-    ssid = SSID.query.get_or_404(id)
-    filePath = Path(f"static/img/{ssid.ssidName}.png")
-    if filePath.exists():
-        log.info(f"Qr Code accessed for {ssid.ssidName}")
-        return send_file(f"static/img/{ssid.ssidName}.png")
-    else:
-        log.error(f"QRCode getImage: 404 no image found for {filePath}")
-        abort(404,description="Resource Not Found")
+    return _sendQR(SSID.query.get_or_404(id))
 
 @bp.route("/createCron/<int:id>")
 @login_required
@@ -102,17 +105,13 @@ def AddCronJob(id):
 @bp.route("/network/qr/<int:id>")
 @login_required
 def networkQR(id):
-    guest = SSID.query.get(id)
-    return render_template("pages/index.html",guest=guest)
+    guest = SSID.query.get_or_404(id)
+    return render_template("pages/index.html", guest=guest, qr_url=url_for("ssid.getImage", id=guest.id))
 
 @bp.route("/api/guest")
 def getGuestQR():
-    ssids=db.session.query(SSID)
-    ssid = ssids.filter_by(isGuest=True).first()
-    filePath = Path(f"static/img/{ssid.ssidName}.png")
-    if filePath.exists():
-        log.info(f"Qr Code accessed for {ssid.ssidName}")
-        return send_file(f"static/img/{ssid.ssidName}.png")
-    else:
-        log.error(f"QRCode getImage: 404 no image found for {filePath}")
-        abort(404,description="Resource Not Found")
+    """Public: serves the QR for the guest SSID only. Every other QR requires login."""
+    ssid = SSID.query.filter_by(isGuest=True).first()
+    if ssid is None:
+        abort(404, description="No guest SSID configured")
+    return _sendQR(ssid)

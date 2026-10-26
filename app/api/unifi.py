@@ -32,15 +32,15 @@ class UNIFI:
             newResponse = session.put(update_url, headers=headers, json=dict, verify=False)
             if newResponse.status_code == 200:
                 log.info("Wi-Fi password changed successfully")
-                log.debug(f"Wi-Fi PW Changed: {dict} ")
+                log.debug(f"Wi-Fi PW Changed for {ssid.ssidName}")
                 return True
             else:
                 log.info(f"Error: {newResponse.status_code} - {newResponse.text} ")
-                log.debug(f"Error: {newResponse.status_code} - {newResponse.text}, info sent: {dict}")
+                log.debug(f"Error: {newResponse.status_code} - {newResponse.text}")
                 return f"Error: {newResponse.status_code} - {newResponse.text}"
         except Exception as e:
             log.info(f"Error: {e}")
-            log.debug(f"Error: {e}, JSON{dict}, apiKey: {apiKey}")
+            log.debug("UNIFI changePW failed", exc_info=True)
             return f"An Error has occured: {e}"
     @staticmethod     
     def getSiteIDs():

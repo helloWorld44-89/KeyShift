@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, url_for, redirect, flash, session
+from functools import wraps
+from flask import Blueprint, render_template, request, url_for, redirect, flash, session, abort
 from flask_bcrypt import bcrypt
 from flask_login import login_user, login_required, logout_user, current_user
 from app.models import user
@@ -7,6 +8,32 @@ import logging
 
 bp = Blueprint("auth", __name__)
 log = logging.getLogger(__name__)
+
+
+def admin_required(f):
+    """Allow only logged-in users with the admin role; others get 403."""
+    @wraps(f)
+    @login_required
+    def wrapper(*args, **kwargs):
+        if not current_user.admin:
+            log.warning(f"{current_user.username} was denied admin-only route {request.path}")
+            abort(403)
+        return f(*args, **kwargs)
+    return wrapper
+
+
+def setup_in_progress() -> bool:
+    """
+    True only for the browser session that created the very first user and has
+    not yet finished first-run setup.
+
+    The flag is bound to the first user's id, so another visitor who also opened
+    /initApp before setup finished cannot reuse it.
+    """
+    first = user.query.order_by(user.id).first()
+    return (first is not None
+            and session.get("init_mode") is True
+            and session.get("init_user") == first.id)
 
 
 @bp.route("/login", methods=["GET", "POST"])

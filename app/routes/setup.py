@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, session, url_for, redirect
 from flask_login import current_user
+from app.routes.auth import setup_in_progress
 from app.models import user, SSID
 import time
 from app.config.config import getConfig, updateConfig
@@ -26,7 +27,7 @@ def initApp():
 @bp.route("/init")
 def initdb():
     try:
-        if current_user.is_authenticated or session.get('init_mode'):
+        if current_user.is_authenticated or setup_in_progress():
             config=getConfig()
             time.sleep(3)
             if config['apiType']=='unifi':
@@ -42,6 +43,9 @@ def initdb():
                 for i in ssids:
                     genQRCode(i)
                     x+=1
+                # First-run setup is finished: this session loses its setup privileges
+                session.pop('init_mode', None)
+                session.pop('init_user', None)
                 return {"message": "Success", "details": f'{x} SSIDs Initialized'}
             else:
                 log.error(f"initDb returned {info}")
@@ -56,10 +60,9 @@ def initdb():
 @bp.route("/newConfig", methods=['POST'])
 def newConfig():
     try:
-        if request.referrer.endswith("/initApp") and session.get('init_mode'):
+        if setup_in_progress():
             myConfig = getConfig()
             newConfig = request.form.to_dict()
-            print(newConfig)
             myConfig["apiType"] = newConfig["api_type"]
             if myConfig["apiType"] == 'unifi':
                 myConfig["apiUser"]["apiKey"] = newConfig["controllerApiKey"] or None
@@ -71,7 +74,6 @@ def newConfig():
             myConfig["controllerIp"]=newConfig["controllerIp"]
             updateConfig(myConfig)
             log.info(f"New Config Saved")
-            log.debug(f"New Config Saved {newConfig}")  
             return {"message":"Success", "details": "Configuration Saved"}
         else:
             log.error("Unauthorized Config Creation Attempt")
