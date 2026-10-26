@@ -56,6 +56,13 @@ def create_app():
     from app.routes import register_blueprints
     register_blueprints(app)  # Registers auth, admin, ssid, setup blueprints
 
+    # --- Health check (liveness/readiness probes) ---
+    @app.route('/healthz')
+    @limiter.exempt
+    def healthz():
+        """Lightweight, unauthenticated and rate-limit-exempt endpoint for k3s probes."""
+        return {"status": "ok"}, 200
+
     # --- Login Manager ---
     login_manager = LoginManager()
     login_manager.login_message_category = "info"
