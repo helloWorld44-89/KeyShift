@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python 3.11+
+- Python 3.12+
 - A UniFi or TP-Link Omada controller reachable over the network
 - Docker & Docker Compose (recommended) **or** a Python virtual environment
 

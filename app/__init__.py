@@ -6,11 +6,17 @@ from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from os import path
+import fcntl
+import logging
 import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file (if present)
 load_dotenv()
+
+log = logging.getLogger(__name__)
+
+MIGRATIONS_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), "migrations")
 
 # Initialise extensions without binding to an app yet (Application Factory pattern)
 db = SQLAlchemy()
@@ -55,7 +61,8 @@ def create_app(test_config=None):
     # --- Extensions ---
     db.init_app(app)
     limiter.init_app(app)
-    migrate.init_app(app, db)  # Alembic migrations registered here
+    # Alembic migrations; batch mode lets SQLite alter tables
+    migrate.init_app(app, db, directory=MIGRATIONS_DIR, render_as_batch=True)
 
     # CSRF protection for all forms (Flask-WTF)
     from flask_wtf.csrf import CSRFProtect
@@ -95,7 +102,7 @@ def create_app(test_config=None):
         """Callback used by Flask-Login to reload the user from the session."""
         return user.query.get(int(id))
 
-    # Initialise the database on first run (skips if DB already exists)
+    # Create or upgrade the database schema on startup
     if not test_config:
         _maybe_init_db(app)
 
@@ -104,37 +111,38 @@ def create_app(test_config=None):
 
 def _maybe_init_db(app):
     """
-    Creates the SQLite database tables on first launch.
+    Brings the database schema up to date on startup.
 
-    Uses a file-based lock to prevent race conditions when multiple Gunicorn
-    workers start simultaneously — only the first worker to create the lock
-    file will perform the initialisation.
+    Fresh installs get the schema from the migrations. Databases created before
+    migrations existed (tables but no alembic_version) are stamped at the baseline
+    revision first, so their data is left untouched.
+
+    An flock on instance/.migrate.lock serialises Gunicorn workers and cron jobs
+    that start at the same time. The OS drops the lock if the holder dies, so a
+    crash can never leave a stale lock behind.
     """
-    db_path = path.join("instance", "KeyShift.db")
-
-    if path.exists(db_path):
-        print("Database exists, skipping creation.")
-        return
-
-    lock_path = db_path + ".init.lock"
-
-    # Atomic lock: only the process that creates the lock file wins
-    try:
-        fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        os.close(fd)
-    except FileExistsError:
-        # Another worker is already initialising — nothing to do
-        print(f"[PID {os.getpid()}] DB init already in progress, skipping.")
-        return
-
-    try:
-        print(f"[PID {os.getpid()}] Creating database...")
+    if not path.isdir(MIGRATIONS_DIR):
+        log.warning("No migrations directory found; creating tables directly.")
         with app.app_context():
             db.create_all()
-        print("Database created!")
-    finally:
-        # Always remove the lock so it doesn't block future container restarts
-        try:
-            os.remove(lock_path)
-        except OSError:
-            pass
+        return
+
+    os.makedirs(app.instance_path, exist_ok=True)
+    with open(path.join(app.instance_path, ".migrate.lock"), "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        with app.app_context():
+            upgrade_schema(app)
+
+
+def upgrade_schema(app):
+    """Stamp a pre-migrations database at the baseline, then upgrade to head."""
+    from alembic.script import ScriptDirectory
+    from flask_migrate import stamp, upgrade
+    from sqlalchemy import inspect
+
+    tables = inspect(db.engine).get_table_names()
+    if tables and "alembic_version" not in tables:
+        baseline = ScriptDirectory(MIGRATIONS_DIR).get_bases()[0]
+        log.info(f"Existing database without migration history; stamping {baseline}")
+        stamp(revision=baseline)
+    upgrade()

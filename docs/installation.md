@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Python 3.11+
+- Python 3.12+
 - pip
 - A system cron daemon (for password rotation)
 
