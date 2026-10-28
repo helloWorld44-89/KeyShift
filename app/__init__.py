@@ -132,6 +132,8 @@ def _maybe_init_db(app):
         fcntl.flock(lock, fcntl.LOCK_EX)
         with app.app_context():
             upgrade_schema(app)
+            from app.config.config import encryptConfigSecrets
+            encryptConfigSecrets()
 
 
 def upgrade_schema(app):

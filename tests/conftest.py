@@ -3,6 +3,8 @@ import pytest
 
 os.environ.setdefault("SECRET_KEY", "test-secret")
 
+TEST_KEY = "ZmFrZS1rZXktZm9yLXRlc3RzLW9ubHktMzItYnl0ZXM="  # valid Fernet key, tests only
+
 from app import create_app, db
 from app.models import user, SSID
 
@@ -16,6 +18,7 @@ def app(tmp_path):
         "RATELIMIT_ENABLED": False,
         "QR_DIR": str(tmp_path),
         "SETUP_TOKEN": "test-setup-token",
+        "ENCRYPTION_KEY": TEST_KEY,
     })
     with app.app_context():
         db.create_all()

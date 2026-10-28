@@ -1,5 +1,6 @@
 from flask_login import UserMixin
 from . import db
+from .crypto import EncryptedText
 from sqlalchemy import delete
 from flask_bcrypt import bcrypt
 import secrets
@@ -63,7 +64,7 @@ class SSID(db.Model):
     __tablename__ = 'ssids'
     id = db.Column(db.Integer, primary_key=True)
     ssidName = db.Column(db.Text, nullable=False)
-    ssidPW = db.Column(db.Text)                         # Current plaintext Wi-Fi password
+    ssidPW = db.Column(EncryptedText)                   # Current Wi-Fi password (encrypted at rest)
     lastChanged = db.Column(db.DateTime, default=None)  # Timestamp of last password change
     siteID = db.Column(db.Text)                         # Controller site ID
     wlanGroupID = db.Column(db.Text, default=None)      # WLAN group (Omada only)
@@ -74,6 +75,10 @@ class SSID(db.Model):
     rotateFrequency = db.Column(db.Text, default=None)  # Cron expression for rotation
     qrCode = db.Column(db.Boolean, default=False)       # QR code generation enabled
     isGuest = db.Column(db.Boolean, default=False)      # Guest network flag
+    pendingPW = db.Column(EncryptedText)                # Password being applied to the controller (kept until it succeeds)
+    lastAttempt = db.Column(db.DateTime, default=None)  # Time of the last controller change attempt
+    failCount = db.Column(db.Integer, default=0)        # Consecutive failed change attempts
+    lastError = db.Column(db.Text, default=None)        # Error from the last failed attempt
 
     def __repr__(self):
         return f'SSID: {self.ssidName} SiteID: {self.siteID} WLANGroupID: {self.wlanGroupID} SSIDID: {self.ssidID}'

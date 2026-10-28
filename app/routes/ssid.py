@@ -4,13 +4,9 @@ from flask_login import login_required
 from app.routes.auth import admin_required
 from pathlib import Path
 from app.models import SSID
-from app.config.config import getConfig
 from app.config.crontab import createCron, cronChange, deleteCron, manualCron
-from app.utilities.genPW import genPW
-from app.utilities.genQR import genQRCode, qrPath
-from app.api.omada import OMADA
-from app.api.unifi import UNIFI
-from app import db
+from app.rotation import rotate
+from app.utilities.genQR import qrPath
 import logging
 
 bp = Blueprint("ssid", __name__)
@@ -23,42 +19,18 @@ log = logging.getLogger(__name__)
 @bp.route("/changepw/<int:id>", methods=["POST"])
 @login_required
 def changePW(id:int):
+    """Change an SSID's password: the given `pw`, or a generated one (pw=auto, the default)."""
+    ssid = SSID.query.get_or_404(id)
+    pw = request.values.get("pw", 'auto')
     try:
-        myconfig = getConfig()
-        ssid=SSID.query.get(id)
-        pw = request.values.get("pw", 'auto')
-        if pw != 'auto':
-            if myconfig["apiType"] == "omada":
-                info=OMADA.changePW(ssid,pw)
-            elif myconfig["apiType"] == "unifi":    
-                info=UNIFI.changePW(ssid,pw)
-            else:
-                log.error(f"Invalid API Type: {myconfig['apiType']}")
-                return abort(404, f"Error changing password: Invalid API Type {myconfig['apiType']}") 
-        else:
-            pw=genPW()
-            if myconfig["apiType"] == "omada":
-                info=OMADA.changePW(ssid,pw)
-            elif myconfig["apiType"] == "unifi":    
-                info=UNIFI.changePW(ssid,pw)
-            else:
-                log.error(f"Invalid API Type: {myconfig['apiType']}")
-                return abort(404, f"Error changing password: Invalid API Type {myconfig['apiType']}")
-        if info is True:
-            ssid.ssidPW=pw
-            db.session.add(ssid)
-            db.session.commit()
-            log.info(f"Password changed for {ssid.ssidName}")
-            log.debug(f"Password changed for {ssid.ssidName}")
-            genQRCode(ssid, pw)
-            return redirect(url_for('admin.admin'))
-        else:
-            log.error(f"Error changing password for {ssid.ssidName}: {info}")
-            return {"message":f"Error changing password: {info}"}
+        result = rotate(ssid, None if pw == 'auto' else pw, attempts=1)
     except Exception as e:
         log.error(f"Error changing password: {e}")
-        return abort(500,f"An Error has occured: {e}")
- 
+        return {"message": "An error has occured changing the password"}, 500
+    if result.ok:
+        return redirect(url_for('admin.admin'))
+    return {"message": "The controller did not accept the password change. "
+                       "It is saved and will be retried; see the SSID's rotation status."}, 502
 
 def _sendQR(ssid):
     """Return the stored QR image for an SSID, or 404 if it hasn't been generated."""
