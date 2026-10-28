@@ -1,5 +1,4 @@
 import logging
-from logging.config import fileConfig
 
 from flask import current_app
 
@@ -9,9 +8,8 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-fileConfig(config.config_file_name)
+# Logging is configured by the app (app/logging_config.py). Alembic's default fileConfig()
+# would replace the app's handlers and disable its loggers when migrations run at startup.
 logger = logging.getLogger('alembic.env')
 
 

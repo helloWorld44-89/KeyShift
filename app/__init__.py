@@ -71,8 +71,10 @@ def create_app(test_config=None):
 
     # --- Logging ---
     from logging.config import dictConfig
-    from app.logging_config import LOGGING_CONFIG
+    from app.logging_config import LOGGING_CONFIG, addFileHandler
     dictConfig(LOGGING_CONFIG)
+    if not app.config.get("TESTING"):
+        addFileHandler(app)  # feeds the log viewer on the admin Advanced tab
 
     # --- Blueprints ---
     from .pages import bp

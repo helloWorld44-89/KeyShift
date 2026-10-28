@@ -54,3 +54,13 @@ def test_upgrade_is_repeatable(file_app):
     upgrade_schema(file_app)
     upgrade_schema(file_app)
     assert schema_diff() == []
+
+
+def test_running_migrations_does_not_break_app_logging(file_app):
+    import logging
+    root = logging.getLogger()
+    app_logger = logging.getLogger("app.routes.auth")
+    handlers, level = list(root.handlers), root.level
+    upgrade_schema(file_app)
+    assert root.handlers == handlers and root.level == level
+    assert app_logger.disabled is False

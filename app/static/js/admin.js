@@ -219,3 +219,54 @@ document.addEventListener('DOMContentLoaded', function() {
   editConfig();
   editUserModal();
 });
+
+// --- Log viewer (Advanced tab, admins only) ---
+function logViewer(){
+  const output = document.getElementById("logOutput");
+  if (!output) return;
+  const level = document.getElementById("logLevel");
+  const lines = document.getElementById("logLines");
+  const auto = document.getElementById("logAuto");
+  let timer = null;
+
+  function render(entries){
+    output.replaceChildren();
+    if (entries.length === 0){
+      output.textContent = "No log entries yet.";
+      return;
+    }
+    entries.forEach((entry) => {
+      const row = document.createElement("div");
+      row.textContent = entry;  // textContent: log text is never parsed as HTML
+      if (/^\[[^\]]+\] (ERROR|CRITICAL)\b/.test(entry)) row.style.color = "#ff8080";
+      else if (/^\[[^\]]+\] WARNING\b/.test(entry)) row.style.color = "#ffd166";
+      row.style.whiteSpace = "pre-wrap";
+      output.appendChild(row);
+    });
+    output.scrollTop = output.scrollHeight;
+  }
+
+  function load(){
+    const params = new URLSearchParams({ level: level.value, lines: lines.value });
+    fetch("/admin/logs?" + params)
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((data) => render(data.entries))
+      .catch((status) => { output.textContent = "Could not load the log (" + status + ")."; });
+  }
+
+  function setAuto(){
+    clearInterval(timer);
+    timer = auto.checked ? setInterval(load, 5000) : null;
+  }
+
+  document.getElementById("logRefresh").addEventListener("click", load);
+  level.addEventListener("change", load);
+  lines.addEventListener("change", load);
+  auto.addEventListener("change", setAuto);
+  // load when the Advanced tab is opened, and when the page opens on it
+  document.querySelectorAll('[data-bs-target="#advanced"]').forEach((tab) => {
+    tab.addEventListener("shown.bs.tab", load);
+  });
+  if (document.getElementById("advanced").classList.contains("active")) load();
+}
+document.addEventListener("DOMContentLoaded", logViewer);
