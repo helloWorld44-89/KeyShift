@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, url_for, redirect, session, abort
+from flask import Blueprint, render_template, request, url_for, redirect, session, abort, jsonify, current_app
 from flask_login import login_required, current_user
 from app.models import user, SSID
 from app.config.config import getConfig, updateConfig
@@ -7,6 +7,8 @@ from app.utilities.genQR import genQRCode
 from app.api import unifi,omada
 from app.routes.auth import admin_required, setup_token_valid, clear_setup_token
 from app import db
+from app.logging_config import logFilePath
+from app.utilities.logTail import readLog, LEVELS
 import logging
 
 bp = Blueprint("admin", __name__)
@@ -33,6 +35,21 @@ def admin():
     tab=request.args.get('tab','home')
     
     return render_template("pages/admin.html",users=users,config = myConfig,current_user=current_user,cron = cron,schedule=schedule,tab=tab,ssids=ssids,guest=guestSSID)
+
+@bp.route("/admin/logs")
+@admin_required
+def viewLogs():
+    """Tail of the application log for the Advanced tab: ?lines=1-1000&level=ALL|DEBUG|INFO|WARNING|ERROR."""
+    level = request.args.get("level", "ALL").upper()
+    if level != "ALL" and level not in LEVELS:
+        return {"message": "Unknown log level"}, 400
+    try:
+        count = max(1, min(int(request.args.get("lines", 200)), 1000))
+    except ValueError:
+        return {"message": "lines must be a number"}, 400
+    response = jsonify({"entries": readLog(logFilePath(current_app), count, level)})
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 @bp.route("/log",methods=["POST"])
 @login_required
