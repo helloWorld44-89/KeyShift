@@ -189,6 +189,11 @@
                               <i class="bi bi-dash-circle"></i> Disabled
                             </span>
                           {% endif %}
+                          {% if i.failCount %}
+                            <span class="modern-badge badge-danger-modern" {% if current_user.admin and i.lastError %}title="{{ i.lastError }}"{% endif %}>
+                              <i class="bi bi-exclamation-triangle"></i> Change failed ({{ i.failCount }}x), retrying
+                            </span>
+                          {% endif %}
                         </td>
                         <td>
                           <div class="btn-group">
