@@ -50,6 +50,11 @@ Edit `.env` and set your values:
 # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
 SECRET_KEY=your-secure-secret-key-here
 
+# Optional but recommended: key that encrypts stored Wi-Fi passwords and controller
+# credentials. Back it up with data/db. If unset, one is generated in data/db/encryption.key.
+# python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+ENCRYPTION_KEY=
+
 FLASK_ENV=production
 FLASK_DEBUG=false
 TZ=America/Chicago
