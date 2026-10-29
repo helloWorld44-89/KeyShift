@@ -56,11 +56,12 @@ def alert(message: str):
 
 
 def rotate(ssid: SSID, newPW: str | None = None, attempts: int = 3, delay: float = 5,
-           sleep=time.sleep) -> RotationResult:
+           sleep=time.sleep, onSuccess=None) -> RotationResult:
     """
     Change the password of an SSID. Uses newPW if given, else a password left pending
     by an earlier failed attempt, else a freshly generated one. Never raises for a
-    controller failure; check the result.
+    controller failure; check the result. onSuccess, if given, runs just before the
+    success is committed, so its changes land in the same transaction.
     """
     password = newPW or ssid.pendingPW or generate(getPolicy())
 
@@ -83,6 +84,8 @@ def rotate(ssid: SSID, newPW: str | None = None, attempts: int = 3, delay: float
         ssid.lastChanged = datetime.now()
         ssid.failCount = 0
         ssid.lastError = None
+        if onSuccess:
+            onSuccess()
         db.session.commit()
         log.info(f"Password changed for {ssid.ssidName}")
         genQRCode(ssid)

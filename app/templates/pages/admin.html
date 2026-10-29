@@ -189,6 +189,11 @@
                               <i class="bi bi-dash-circle"></i> Disabled
                             </span>
                           {% endif %}
+                          {% if i.listEnabled %}
+                            <span class="modern-badge badge-success-modern" title="Rotation uses this SSID's password list">
+                              <i class="bi bi-list-ol"></i> List ({{ i.entries | length }})
+                            </span>
+                          {% endif %}
                           {% if i.failCount %}
                             <span class="modern-badge badge-danger-modern" {% if current_user.admin and i.lastError %}title="{{ i.lastError }}"{% endif %}>
                               <i class="bi bi-exclamation-triangle"></i> Change failed ({{ i.failCount }}x), retrying
@@ -221,6 +226,11 @@
                               <i class="bi bi-key"></i> Change PW
                             </a>
                           </div>
+                          {% if current_user.admin %}
+                          <button type="button" class="btn btn-sm btn-outline-secondary pl-open" data-ssid-id="{{ i.id }}" data-ssid-name="{{ i.ssidName }}" data-bs-toggle="modal" data-bs-target="#passwordListModal">
+                            <i class="bi bi-list-ol"></i> Password list
+                          </button>
+                          {% endif %}
                         </td>
                       </tr>
                       {% endfor %}
@@ -618,6 +628,66 @@
         </div>
       </div>
     </div>
+
+
+    {% if current_user.admin %}
+    <!-- Password list modal (filled by admin.js) -->
+    <div class="modal fade" id="passwordListModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-list-ol"></i> Password list &mdash; <span id="plName"></span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-danger py-2 d-none" id="plError" role="alert"></div>
+            <div class="alert alert-warning py-2 d-none" id="plFinished" role="status">
+              Every password in this list has been used and rotation is stopped. Add passwords or reset the list, then set a schedule from the Rotate menu.
+            </div>
+            <div class="row g-3 align-items-end mb-3">
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="plEnabled"/>
+                  <label class="form-check-label fw-semibold" for="plEnabled">Rotate through this list instead of generating passwords</label>
+                </div>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label fw-semibold" for="plMode">Order</label>
+                <select class="form-select form-select-modern" id="plMode">
+                  <option value="sequential">In order</option>
+                  <option value="random">Random</option>
+                  <option value="random-norepeat">Random, never the same twice in a row</option>
+                </select>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label fw-semibold" for="plOnEnd">After the last password (in order)</label>
+                <select class="form-select form-select-modern" id="plOnEnd">
+                  <option value="restart">Start over</option>
+                  <option value="stop">Stop rotating</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button type="button" class="btn btn-modern btn-modern-primary w-100" id="plSave">Save</button>
+              </div>
+            </div>
+            <div class="table-responsive mb-3">
+              <table class="table modern-table align-middle mb-0">
+                <thead><tr><th>#</th><th>Password</th><th>Last used</th><th></th></tr></thead>
+                <tbody id="plRows"></tbody>
+              </table>
+              <p class="text-muted small mt-2 mb-0" id="plEmpty">No passwords yet.</p>
+            </div>
+            <label class="form-label fw-semibold" for="plNew">Add passwords (one per line, 8&ndash;63 characters)</label>
+            <textarea class="form-control form-control-modern" id="plNew" rows="4" autocomplete="off" spellcheck="false"></textarea>
+            <div class="d-flex gap-2 mt-2">
+              <button type="button" class="btn btn-modern btn-modern-primary" id="plAdd"><i class="bi bi-plus-circle"></i> Add</button>
+              <button type="button" class="btn btn-outline-secondary" id="plReset"><i class="bi bi-skip-backward"></i> Reset to first</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="static/js/admin.js"></script>

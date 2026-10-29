@@ -6,6 +6,7 @@ from pathlib import Path
 from app.models import SSID
 from app.config.crontab import createCron, cronChange, deleteCron, manualCron
 from app.rotation import rotate
+from app.passwordList import rotateFromList, ListUnavailable
 from app.settings import getPolicy
 from app.utilities.passwordPolicy import checkPassword
 from app.utilities.genQR import qrPath
@@ -29,7 +30,12 @@ def changePW(id:int):
         if problems:
             return {"message": " ".join(problems)}, 400
     try:
-        result = rotate(ssid, None if pw == 'auto' else pw, attempts=1)
+        if pw == 'auto' and ssid.listEnabled:
+            result = rotateFromList(ssid, attempts=1)
+        else:
+            result = rotate(ssid, None if pw == 'auto' else pw, attempts=1)
+    except ListUnavailable as e:
+        return {"message": str(e)}, 409
     except Exception as e:
         log.error(f"Error changing password: {e}")
         return {"message": "An error has occured changing the password"}, 500

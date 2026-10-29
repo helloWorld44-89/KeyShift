@@ -53,6 +53,104 @@ document.addEventListener("click", function(event){
   if (settingsTab) settingsTab.addEventListener("click", preview, { once: true });
   preview();
 })();
+// Password lists: one shared modal, filled from the JSON state each route returns
+(function(){
+  const modal = document.getElementById("passwordListModal");
+  if (!modal) return;
+  const $ = id => document.getElementById(id);
+  let ssidId = null;
+  function call(path, body, method){
+    return fetch(`/ssid/${ssidId}/passwords${path}`, {
+      method: method || "POST",
+      headers: { "X-CSRFToken": csrfToken() },
+      body: body ? new URLSearchParams(body) : undefined,  // GET has no body
+    }).then(r => r.json().then(d => {
+      if (!r.ok) throw new Error(d.message || "Request failed");
+      return d;
+    })).then(render).catch(e => showError(e.message));
+  }
+  function showError(message){
+    $("plError").textContent = message;
+    $("plError").classList.toggle("d-none", !message);
+  }
+  function iconButton(icon, title, onClick, disabled){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn btn-sm btn-outline-secondary";
+    b.title = title;
+    b.disabled = !!disabled;
+    b.innerHTML = `<i class="bi ${icon}"></i>`;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+  function render(state){
+    showError("");
+    $("plEnabled").checked = state.enabled;
+    $("plMode").value = state.mode;
+    $("plOnEnd").value = state.onEnd;
+    $("plOnEnd").disabled = state.mode !== "sequential";
+    $("plFinished").classList.toggle("d-none", !state.finished);
+    $("plEmpty").classList.toggle("d-none", state.entries.length > 0);
+    const rows = $("plRows");
+    rows.replaceChildren();
+    state.entries.forEach((e, i) => {
+      const tr = document.createElement("tr");
+      const num = document.createElement("td");
+      num.textContent = e.position;
+      const pw = document.createElement("td");
+      const code = document.createElement("code");
+      code.textContent = e.password;  // textContent: passwords are never parsed as HTML
+      pw.appendChild(code);
+      if (e.current){
+        const badge = document.createElement("span");
+        badge.className = "modern-badge badge-success-modern ms-2";
+        badge.textContent = "current";
+        pw.appendChild(badge);
+      } else if (state.mode === "sequential" && !state.finished && state.enabled && e.position - 1 === state.index){
+        const badge = document.createElement("span");
+        badge.className = "modern-badge badge-danger-modern ms-2";
+        badge.textContent = "next";
+        pw.appendChild(badge);
+      }
+      const used = document.createElement("td");
+      used.textContent = e.lastUsed || "never";
+      const actions = document.createElement("td");
+      actions.className = "text-nowrap text-end";
+      actions.append(
+        iconButton("bi-arrow-up", "Move up", () => call(`/${e.id}/move`, { direction: "up" }), i === 0),
+        " ",
+        iconButton("bi-arrow-down", "Move down", () => call(`/${e.id}/move`, { direction: "down" }), i === state.entries.length - 1),
+        " ",
+        iconButton("bi-trash", "Remove", () => call(`/${e.id}/delete`)),
+      );
+      tr.append(num, pw, used, actions);
+      rows.appendChild(tr);
+    });
+  }
+  document.addEventListener("click", function(event){
+    const open = event.target.closest(".pl-open");
+    if (!open) return;
+    ssidId = open.dataset.ssidId;
+    $("plName").textContent = open.dataset.ssidName;
+    $("plRows").replaceChildren();
+    $("plNew").value = "";
+    showError("");
+    call("", null, "GET");
+  }, true);
+  $("plAdd").addEventListener("click", () => {
+    call("/add", { passwords: $("plNew").value }).then(() => {
+      if ($("plError").classList.contains("d-none")) $("plNew").value = "";
+    });
+  });
+  $("plSave").addEventListener("click", () => call("/settings", {
+    enabled: $("plEnabled").checked ? "1" : "0",
+    mode: $("plMode").value,
+    onEnd: $("plOnEnd").value,
+  }).then(() => { if ($("plError").classList.contains("d-none")) window.location.reload(); }));
+  $("plMode").addEventListener("change", () => { $("plOnEnd").disabled = $("plMode").value !== "sequential"; });
+  $("plReset").addEventListener("click", () => call("/reset"));
+  modal.addEventListener("hidden.bs.modal", () => { $("plRows").replaceChildren(); $("plNew").value = ""; });
+})();
 // Function to send logs to the server
 function sendLog(message){
     fetch('/log', {

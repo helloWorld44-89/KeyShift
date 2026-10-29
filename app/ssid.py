@@ -4,7 +4,7 @@ from app import create_app
 with create_app().app_context():
     from app import db
     from app.models import SSID
-    from app.rotation import rotate
+    from app.passwordList import rotateScheduled
 
     log = logging.getLogger("CronPWChangeScript")
     args=sys.argv
@@ -14,7 +14,7 @@ with create_app().app_context():
         ssid = db.session.get(SSID,args[1])
         if ssid.pwRotate is not True:
             raise Exception(f"SSID:{ssid.ssidName} PW is not set to rotate. Aborting...")
-        rotate(ssid)
+        rotateScheduled(ssid)
     except Exception as e:
         log.error(f" {e}")
         log.debug(f" {e} | Args: {args}")
