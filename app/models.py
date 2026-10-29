@@ -79,6 +79,13 @@ class SSID(db.Model):
     lastAttempt = db.Column(db.DateTime, default=None)  # Time of the last controller change attempt
     failCount = db.Column(db.Integer, default=0)        # Consecutive failed change attempts
     lastError = db.Column(db.Text, default=None)        # Error from the last failed attempt
+    listEnabled = db.Column(db.Boolean, default=False)  # Rotate through the password list instead of generating
+    listMode = db.Column(db.Text, default='sequential') # sequential | random | random-norepeat
+    listIndex = db.Column(db.Integer, default=0)        # Next position to use (sequential)
+    listOnEnd = db.Column(db.Text, default='restart')   # restart | stop, after the last entry (sequential)
+    listCurrentId = db.Column(db.Integer, default=None) # Entry whose password is applied now
+    entries = db.relationship('PasswordListEntry', backref='ssid', order_by='PasswordListEntry.position',
+                              cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'SSID: {self.ssidName} SiteID: {self.siteID} WLANGroupID: {self.wlanGroupID} SSIDID: {self.ssidID}'
@@ -209,3 +216,13 @@ class Setting(db.Model):
     __tablename__ = 'settings'
     key = db.Column(db.Text, primary_key=True)
     value = db.Column(db.Text)
+
+
+class PasswordListEntry(db.Model):
+    """One password in an SSID's rotation list (encrypted at rest)."""
+    __tablename__ = 'ssid_passwords'
+    id = db.Column(db.Integer, primary_key=True)
+    ssid_id = db.Column(db.Integer, db.ForeignKey('ssids.id'), nullable=False)
+    password = db.Column(EncryptedText, nullable=False)
+    position = db.Column(db.Integer, nullable=False, default=0)
+    lastUsed = db.Column(db.DateTime, default=None)
