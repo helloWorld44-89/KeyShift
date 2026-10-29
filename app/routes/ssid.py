@@ -1,8 +1,10 @@
-from flask import Blueprint, request, url_for, redirect, abort, render_template, send_file
+from flask import Blueprint, request, url_for, redirect, abort, render_template, send_file, jsonify
+from flask_login import current_user
 from croniter import croniter
 from flask_login import login_required
 from app.routes.auth import admin_required
 from pathlib import Path
+from app import limiter
 from app.models import SSID
 from app.config.crontab import createCron, cronChange, deleteCron, manualCron
 from app.rotation import rotate
@@ -37,6 +39,17 @@ def changePW(id:int):
         return redirect(url_for('admin.admin'))
     return {"message": "The controller did not accept the password change. "
                        "It is saved and will be retried; see the SSID's rotation status."}, 502
+
+@bp.route("/ssid/<int:id>/password", methods=["POST"])
+@admin_required
+@limiter.limit("30 per minute")
+def revealPassword(id):
+    """Return an SSID's current password to an admin who asked for it (Show / Copy on the home tab)."""
+    ssid = SSID.query.get_or_404(id)
+    log.info(f"{current_user.username} revealed the password of {ssid.ssidName}")
+    response = jsonify({"password": ssid.ssidPW or ""})
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 def _sendQR(ssid):
     """Return the stored QR image for an SSID, or 404 if it hasn't been generated."""

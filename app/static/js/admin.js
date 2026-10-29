@@ -53,6 +53,71 @@ document.addEventListener("click", function(event){
   if (settingsTab) settingsTab.addEventListener("click", preview, { once: true });
   preview();
 })();
+
+// Show / Copy password buttons (admins). The password is fetched on click, never
+// rendered into the page, and the cell is re-masked after a timeout or when the tab is hidden.
+const PW_MASK = "\u2022".repeat(8);
+const PW_SHOW_MS = 15000;
+function fetchPassword(id){
+  return fetch(`/ssid/${id}/password`, {
+    method: "POST",
+    headers: { "X-CSRFToken": csrfToken() },
+  }).then(r => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }).then(d => d.password);
+}
+function maskPassword(cell){
+  clearTimeout(cell._pwTimer);
+  cell.querySelector(".pw-text").textContent = PW_MASK;
+  cell.querySelector(".pw-show i").className = "bi bi-eye";
+  cell.dataset.shown = "";
+}
+function flashIcon(button, icon){
+  const i = button.querySelector("i");
+  const old = i.className;
+  i.className = icon;
+  setTimeout(() => { i.className = old; }, 1500);
+}
+function copyText(text, anchor){
+  if (navigator.clipboard && window.isSecureContext){
+    return navigator.clipboard.writeText(text);
+  }
+  // No Clipboard API (plain HTTP): fall back to selecting the text for Ctrl+C
+  const box = document.createElement("textarea");
+  box.value = text;
+  box.style.position = "fixed";
+  box.style.opacity = "0";
+  document.body.appendChild(box);
+  box.select();
+  const ok = document.execCommand("copy");
+  box.remove();
+  return ok ? Promise.resolve() : Promise.reject(new Error("copy blocked"));
+}
+document.addEventListener("click", function(event){
+  const button = event.target.closest(".pw-show, .pw-copy");
+  if (!button) return;
+  const cell = button.closest("[data-ssid-pw]");
+  const id = cell.dataset.ssidPw;
+  if (button.classList.contains("pw-show")){
+    if (cell.dataset.shown){ maskPassword(cell); return; }
+    fetchPassword(id).then(pw => {
+      cell.querySelector(".pw-text").textContent = pw;
+      button.querySelector("i").className = "bi bi-eye-slash";
+      cell.dataset.shown = "1";
+      clearTimeout(cell._pwTimer);
+      cell._pwTimer = setTimeout(() => maskPassword(cell), PW_SHOW_MS);
+    }).catch(() => flashIcon(button, "bi bi-x-circle"));
+  } else {
+    fetchPassword(id)
+      .then(pw => copyText(pw, cell))
+      .then(() => flashIcon(button, "bi bi-check2"))
+      .catch(() => flashIcon(button, "bi bi-x-circle"));
+  }
+});
+document.addEventListener("visibilitychange", function(){
+  if (document.hidden) document.querySelectorAll("[data-ssid-pw]").forEach(maskPassword);
+});
 // Function to send logs to the server
 function sendLog(message){
     fetch('/log', {
