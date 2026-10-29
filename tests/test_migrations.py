@@ -30,7 +30,7 @@ def schema_diff():
 
 def test_fresh_database_matches_models(file_app):
     upgrade_schema(file_app)
-    assert {"users", "ssids", "alembic_version"} <= set(inspect(db.engine).get_table_names())
+    assert {"users", "ssids", "settings", "alembic_version"} <= set(inspect(db.engine).get_table_names())
     assert schema_diff() == []
 
 

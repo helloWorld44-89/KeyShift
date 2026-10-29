@@ -579,6 +579,52 @@
                   </button>
                 </form>
               </div>
+
+              {% if current_user.admin %}
+              <div class="modern-card mt-4" id="passwordPolicy">
+                <h5 class="fw-bold mb-3">
+                  <i class="bi bi-shield-lock"></i> Password Policy
+                </h5>
+                <p class="text-muted small">How generated Wi-Fi passwords are built (scheduled rotation and "Change PW"). The defaults match the original generator.</p>
+                <form action="/admin/passwordPolicy" method="POST" id="policyForm">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label fw-semibold" for="policyLength">Length (8-63)</label>
+                      <input type="number" min="8" max="63" class="form-control form-control-modern" id="policyLength" name="length" value="{{ policy.length }}"/>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label fw-semibold" for="policyMin">Minimum per class</label>
+                      <input type="number" min="0" max="63" class="form-control form-control-modern" id="policyMin" name="minPerClass" value="{{ policy.minPerClass }}"/>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold" for="policySymbols">Allowed symbols</label>
+                      <input type="text" class="form-control form-control-modern" id="policySymbols" name="symbolSet" value="{{ policy.symbolSet }}" autocomplete="off"/>
+                      <div class="form-text">Leave out <code>\ ; , : "</code> if people type these passwords by hand.</div>
+                    </div>
+                  </div>
+                  <div class="d-flex flex-wrap gap-4 mt-3">
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="policyUpper" name="upper" {{ "checked" if policy.upper }}/><label class="form-check-label" for="policyUpper">Uppercase</label></div>
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="policyLower" name="lower" {{ "checked" if policy.lower }}/><label class="form-check-label" for="policyLower">Lowercase</label></div>
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="policyDigits" name="digits" {{ "checked" if policy.digits }}/><label class="form-check-label" for="policyDigits">Digits</label></div>
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="policySymbolsOn" name="symbols" {{ "checked" if policy.symbols }}/><label class="form-check-label" for="policySymbolsOn">Symbols</label></div>
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="policyLook" name="excludeLookalikes" {{ "checked" if policy.excludeLookalikes }}/><label class="form-check-label" for="policyLook">Exclude look-alikes (0 O 1 l I)</label></div>
+                    <div class="form-check"><input class="form-check-input" type="checkbox" id="policyManual" name="enforceManual" {{ "checked" if policy.enforceManual }}/><label class="form-check-label" for="policyManual">Apply the class rules to typed passwords</label></div>
+                  </div>
+                  <div class="mt-3 p-3 rounded" style="background: rgba(127,127,127,0.1);">
+                    <div class="small text-muted mb-1">Preview (not saved) <span id="policyBits"></span></div>
+                    <code id="policySample" class="user-select-all">&nbsp;</code>
+                    <div class="text-danger small mt-1" id="policyError" role="alert"></div>
+                  </div>
+                  <button type="button" class="btn btn-modern btn-modern-primary mt-3" id="policyRegen">
+                    <i class="bi bi-arrow-repeat"></i> New sample
+                  </button>
+                  <button type="submit" class="btn btn-modern btn-modern-success mt-3">
+                    <i class="bi bi-check-circle"></i> Save Policy
+                  </button>
+                </form>
+              </div>
+              {% endif %}
             </div>
           </div>
         </div>

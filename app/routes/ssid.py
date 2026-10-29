@@ -8,6 +8,8 @@ from app import limiter
 from app.models import SSID
 from app.config.crontab import createCron, cronChange, deleteCron, manualCron
 from app.rotation import rotate
+from app.settings import getPolicy
+from app.utilities.passwordPolicy import checkPassword
 from app.utilities.genQR import qrPath
 import logging
 
@@ -24,6 +26,10 @@ def changePW(id:int):
     """Change an SSID's password: the given `pw`, or a generated one (pw=auto, the default)."""
     ssid = SSID.query.get_or_404(id)
     pw = request.values.get("pw", 'auto')
+    if pw != 'auto':
+        problems = checkPassword(pw, getPolicy())
+        if problems:
+            return {"message": " ".join(problems)}, 400
     try:
         result = rotate(ssid, None if pw == 'auto' else pw, attempts=1)
     except Exception as e:

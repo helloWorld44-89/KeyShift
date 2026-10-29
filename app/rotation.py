@@ -20,7 +20,8 @@ from app.api.omada import OMADA
 from app.api.unifi import UNIFI
 from app.config.config import getConfig
 from app.models import SSID
-from app.utilities.genPW import genPW
+from app.settings import getPolicy
+from app.utilities.passwordPolicy import generate
 from app.utilities.genQR import genQRCode
 
 log = logging.getLogger("rotation")
@@ -61,7 +62,7 @@ def rotate(ssid: SSID, newPW: str | None = None, attempts: int = 3, delay: float
     by an earlier failed attempt, else a freshly generated one. Never raises for a
     controller failure; check the result.
     """
-    password = newPW or ssid.pendingPW or genPW()
+    password = newPW or ssid.pendingPW or generate(getPolicy())
 
     ssid.pendingPW = password
     ssid.lastAttempt = datetime.now()
