@@ -22,6 +22,7 @@ KeyShift is a self-hosted web application that gives you full control over your 
 - 🌐 **Dual Controller Support** — Works with both UniFi and TP-Link Omada
 - 👤 **User Management** — Admin and standard roles with bcrypt-hashed passwords
 - 🔒 **Security First** — CSRF protection, rate-limited login, session management
+- 👁️ **Show / Copy Passwords** — Admins can reveal or copy any SSID's current password (copying needs HTTPS or localhost; on plain HTTP a fallback is used where the browser allows it)
 - 🐳 **Docker Ready** — Single-command deployment with Docker Compose
 
 ---
