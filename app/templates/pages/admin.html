@@ -160,6 +160,7 @@
                       <tr>
                         <th><i class="bi bi-wifi"></i> SSID Name</th>
                         <th><i class="bi bi-people"></i> Guest Network</th>
+                        {% if current_user.admin %}<th><i class="bi bi-key"></i> Password</th>{% endif %}
                         <th><i class="bi bi-arrow-clockwise"></i> Auto Rotate</th>
                         <th><i class="bi bi-tools"></i> Actions</th>
                       </tr>
@@ -179,6 +180,17 @@
                             </span>
                           {% endif %}
                         </td>
+                        {% if current_user.admin %}
+                        <td class="text-nowrap" data-ssid-pw="{{ i.id }}">
+                          <code class="pw-text">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</code>
+                          <button type="button" class="btn btn-sm btn-outline-secondary pw-show" title="Show password">
+                            <i class="bi bi-eye"></i>
+                          </button>
+                          <button type="button" class="btn btn-sm btn-outline-secondary pw-copy" title="Copy password">
+                            <i class="bi bi-clipboard"></i>
+                          </button>
+                        </td>
+                        {% endif %}
                         <td>
                           {% if i.pwRotate %}
                             <span class="modern-badge badge-success-modern">
