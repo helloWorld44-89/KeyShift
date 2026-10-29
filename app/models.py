@@ -202,3 +202,10 @@ class SSID(db.Model):
         except Exception as e:
             log.error(e)
             return False
+
+
+class Setting(db.Model):
+    """Application settings that admins change at runtime (key -> JSON text)."""
+    __tablename__ = 'settings'
+    key = db.Column(db.Text, primary_key=True)
+    value = db.Column(db.Text)

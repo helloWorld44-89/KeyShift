@@ -25,6 +25,34 @@ document.addEventListener("click", function(event){
   document.body.appendChild(form);
   form.submit();
 });
+// Password policy: live sample + strength for the (unsaved) form values
+(function(){
+  const form = document.getElementById("policyForm");
+  if (!form) return;
+  const sample = document.getElementById("policySample");
+  const bits = document.getElementById("policyBits");
+  const error = document.getElementById("policyError");
+  let pending = 0;
+  function preview(){
+    const ticket = ++pending;
+    const body = new URLSearchParams(new FormData(form));
+    fetch("/admin/passwordPolicy/preview", {
+      method: "POST",
+      headers: { "X-CSRFToken": csrfToken() },
+      body: body,
+    }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
+      if (ticket !== pending) return;  // a newer request superseded this one
+      error.textContent = ok ? "" : (d.errors || [d.message || "Invalid policy"]).join(" ");
+      sample.textContent = ok ? d.sample : "\u00a0";
+      bits.textContent = ok ? `\u2248 ${d.bits} bits` : "";
+    }).catch(() => { error.textContent = "Could not load a preview"; });
+  }
+  form.addEventListener("input", preview);
+  document.getElementById("policyRegen").addEventListener("click", preview);
+  const settingsTab = document.querySelector('[data-bs-target="#settings"], a[href="#settings"]');
+  if (settingsTab) settingsTab.addEventListener("click", preview, { once: true });
+  preview();
+})();
 // Function to send logs to the server
 function sendLog(message){
     fetch('/log', {

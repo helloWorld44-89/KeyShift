@@ -8,6 +8,8 @@ from app.api import unifi,omada
 from app.routes.auth import admin_required, setup_token_valid, clear_setup_token
 from app import db
 from app.logging_config import logFilePath
+from app.settings import getPolicy, savePolicy
+from app.utilities.passwordPolicy import (PasswordPolicy, validatePolicy, generate, entropyBits)
 from app.utilities.logTail import readLog, LEVELS
 import logging
 
@@ -34,7 +36,7 @@ def admin():
     myConfig = getConfig()
     tab=request.args.get('tab','home')
     
-    return render_template("pages/admin.html",users=users,config = myConfig,current_user=current_user,cron = cron,schedule=schedule,tab=tab,ssids=ssids,guest=guestSSID)
+    return render_template("pages/admin.html",users=users,config = myConfig,current_user=current_user,cron = cron,schedule=schedule,tab=tab,ssids=ssids,guest=guestSSID,policy=getPolicy())
 
 @bp.route("/admin/logs")
 @admin_required
@@ -48,6 +50,47 @@ def viewLogs():
     except ValueError:
         return {"message": "lines must be a number"}, 400
     response = jsonify({"entries": readLog(logFilePath(current_app), count, level)})
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+def _policyFromForm(form) -> PasswordPolicy:
+    """Read a PasswordPolicy from submitted form fields (checkboxes are present only when ticked)."""
+    def number(name, default):
+        try:
+            return int(form.get(name, default))
+        except (TypeError, ValueError):
+            return default
+    return PasswordPolicy(
+        length=number("length", 40),
+        upper="upper" in form, lower="lower" in form,
+        digits="digits" in form, symbols="symbols" in form,
+        minPerClass=number("minPerClass", 1),
+        symbolSet=form.get("symbolSet", ""),
+        excludeLookalikes="excludeLookalikes" in form,
+        enforceManual="enforceManual" in form)
+
+
+@bp.route("/admin/passwordPolicy", methods=["POST"])
+@admin_required
+def savePasswordPolicy():
+    policy = _policyFromForm(request.form)
+    problems = validatePolicy(policy)
+    if problems:
+        return {"message": " ".join(problems)}, 400
+    savePolicy(policy)
+    log.info(f"{current_user.username} updated the password policy")
+    return redirect(url_for("admin.admin", tab="settings"))
+
+
+@bp.route("/admin/passwordPolicy/preview", methods=["POST"])
+@admin_required
+def previewPasswordPolicy():
+    """Sample password and strength for the (unsaved) form values. The sample is never stored."""
+    policy = _policyFromForm(request.form)
+    problems = validatePolicy(policy)
+    if problems:
+        return {"errors": problems}, 400
+    response = jsonify({"sample": generate(policy), "bits": entropyBits(policy)})
     response.headers["Cache-Control"] = "no-store"
     return response
 
